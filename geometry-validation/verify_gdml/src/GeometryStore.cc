@@ -90,12 +90,12 @@ std::ostream& operator<<(std::ostream& os, std::vector<Volume> list)
     size_t width_lv       = 12;
     size_t width_material = 8;
 
-    for (const auto& it : list)
+    for (const auto& val : list)
     {
         width_ids = std::max(width_ids, std::to_string(list.size()).size());
-        width_pv  = std::max(width_pv, it.physical_volume_name.size());
-        width_lv  = std::max(width_pv, it.logical_volume_name.size());
-        width_material = std::max(width_material, it.material_name.size());
+        width_pv  = std::max(width_pv, val.physical_volume_name.size());
+        width_lv  = std::max(width_lv, val.logical_volume_name.size());
+        width_material = std::max(width_material, val.material_name.size());
     }
 
     // Title
@@ -106,7 +106,7 @@ std::ostream& operator<<(std::ostream& os, std::vector<Volume> list)
        << " | " << std::left << std::setw(width_ids) << "Mat ID"
        << " | " << std::setw(width_material) << "Material"
        << " | " << std::setw(width_pv) << "Phys. volume"
-       << " | " << std::setw(width_pv) << "Log. volume"
+       << " | " << std::setw(width_lv) << "Log. volume"
        << " |" << std::endl;
 
     // Dashed line
@@ -137,15 +137,15 @@ std::ostream& operator<<(std::ostream& os, std::vector<Volume> list)
     os << std::endl;
 
     // Table content
-    for (const auto& key : list)
+    for (const auto& val : list)
     {
-        os << "| " << std::left << std::setw(width_ids) << key.volume_id
-           << " | " << std::left << std::setw(width_ids) << key.copy_num
-           << " | " << std::left << std::setw(width_ids) << key.num_replicas
-           << " | " << std::left << std::setw(width_ids) << key.material_id
-           << " | " << std::setw(width_material) << key.material_name << " | "
-           << std::setw(width_pv) << key.physical_volume_name << " | "
-           << std::setw(width_lv) << key.logical_volume_name << " | "
+        os << "| " << std::left << std::setw(width_ids) << val.volume_id
+           << " | " << std::left << std::setw(width_ids) << val.copy_num
+           << " | " << std::left << std::setw(width_ids) << val.num_replicas
+           << " | " << std::left << std::setw(width_ids) << val.material_id
+           << " | " << std::setw(width_material) << val.material_name << " | "
+           << std::setw(width_pv) << val.physical_volume_name << " | "
+           << std::setw(width_lv) << val.logical_volume_name << " |"
            << std::endl;
     }
 
