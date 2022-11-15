@@ -15,8 +15,10 @@
  */
 struct Volume
 {
-    unsigned int material_id;
-    std::string  material_name;
-    std::string  name;
-    unsigned int copy_num;
+    int         volume_id;
+    int         material_id;
+    std::string material_name;
+    std::string name;
+    int         copy_num;
+    int         num_replicas;
 };

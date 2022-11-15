@@ -10,41 +10,27 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <G4LogicalVolume.hh>
 #include <G4Material.hh>
-#include <G4MaterialCutsCouple.hh>
-#include <G4PhysicalVolumeStore.hh>
-#include <G4VSolid.hh>
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct empty.
+ * Construct.
  */
-GeometryStore::GeometryStore() = default;
-
-//---------------------------------------------------------------------------//
-/*!
- * Construct with physical volume.
- */
-GeometryStore::GeometryStore(const G4VPhysicalVolume* world_physical_volume)
+GeometryStore::GeometryStore()
+    : phys_vol_store_(G4PhysicalVolumeStore::GetInstance())
 {
-    this->loop_volumes(world_physical_volume->GetLogicalVolume());
+    std::cout << phys_vol_store_->size() << std::endl;
+    this->loop_volumes();
 }
 
 //---------------------------------------------------------------------------//
 /*!
- * Load volume map from a G4PhysicalVolume.
+ * Get volumes vector.
  */
-void GeometryStore::operator()(const G4VPhysicalVolume* world_physical_volume)
+std::vector<Volume> GeometryStore::get_volumes() const
 {
-    this->loop_volumes(world_physical_volume->GetLogicalVolume());
-}
-//---------------------------------------------------------------------------//
-/*!
- * Get volume map.
- */
-const GeometryStore::GeoTestMap& GeometryStore::get_map() const
-{
-    return ids_volumes_;
+    return volumes_;
 }
 
 //---------------------------------------------------------------------------//
@@ -55,7 +41,7 @@ void GeometryStore::save(const std::string filename)
 {
     std::ofstream output;
     output.open(filename);
-    output << ids_volumes_ << std::endl;
+    output << volumes_ << std::endl;
     output.close();
 }
 
@@ -67,32 +53,25 @@ void GeometryStore::save(const std::string filename)
 /*!
  * Recursive loop to store all logical volumes.
  */
-void GeometryStore::loop_volumes(const G4LogicalVolume* logical_volume)
+void GeometryStore::loop_volumes()
 {
-    // Add volume to the map
-    Volume volume;
-    volume.material_id = logical_volume->GetMaterialCutsCouple()->GetIndex();
-    volume.material_name
-        = logical_volume->GetMaterialCutsCouple()->GetMaterial()->GetName();
-    volume.name = logical_volume->GetName();
-
-    const auto* phys_vol_store = G4PhysicalVolumeStore::GetInstance();
-
-    for (const auto& phys_vol : *phys_vol_store)
+    for (const auto& phys_vol : *phys_vol_store_)
     {
-        if (phys_vol->GetLogicalVolume()->GetName()
-            == logical_volume->GetName())
-        {
-            volume.copy_num = phys_vol->GetCopyNo();
-        }
-    }
+        const auto& logical_volume = phys_vol->GetLogicalVolume();
 
-    ids_volumes_.insert({logical_volume->GetInstanceID(), volume});
+        Volume volume;
+        volume.name          = phys_vol->GetName();
+        volume.volume_id     = phys_vol->GetInstanceID();
+        volume.material_id   = logical_volume->GetMaterial()->GetIndex();
+        volume.material_name = logical_volume->GetMaterial()->GetName();
+        volume.copy_num      = phys_vol->GetCopyNo();
 
-    // Recursive: repeat for every daughter volume, if any
-    for (int i = 0; i < logical_volume->GetNoDaughters(); ++i)
-    {
-        loop_volumes(logical_volume->GetDaughter(i)->GetLogicalVolume());
+        EAxis  dummy_a;
+        double dummy_b, dummy_c;
+        bool   dummy_d;
+        phys_vol->GetReplicationData(
+            dummy_a, volume.num_replicas, dummy_b, dummy_c, dummy_d);
+        volumes_.push_back(volume);
     }
 }
 
@@ -104,22 +83,23 @@ void GeometryStore::loop_volumes(const G4LogicalVolume* logical_volume)
 /*!
  * Define operator << to print a full table with the GeoTestMap data.
  */
-std::ostream& operator<<(std::ostream& os, const GeometryStore::GeoTestMap& map)
+std::ostream& operator<<(std::ostream& os, std::vector<Volume> list)
 {
-    size_t width_ids      = 6 + map.size() / 10;
+    size_t width_ids      = 6;
     size_t width_volume   = 0;
     size_t width_material = 0;
-    for (const auto& it : map)
+
+    for (const auto& it : list)
     {
-        width_volume = std::max(width_volume, it.second.name.size());
-        width_material
-            = std::max(width_material, it.second.material_name.size());
+        width_volume   = std::max(width_volume, it.name.size());
+        width_material = std::max(width_material, it.material_name.size());
     }
 
-    // Titles line
+    // Title
     os << std::endl;
     os << "| " << std::left << std::setw(width_ids) << "Vol ID"
        << " | " << std::left << std::setw(width_ids) << "Copy"
+       << " | " << std::left << std::setw(width_ids) << "Repl"
        << " | " << std::left << std::setw(width_ids) << "Mat ID"
        << " | " << std::setw(width_material) << "Material"
        << " | " << std::setw(width_volume) << "Volume"
@@ -127,6 +107,10 @@ std::ostream& operator<<(std::ostream& os, const GeometryStore::GeoTestMap& map)
 
     // Dashed line
     os << "| ";
+
+    for (int i = 0; i < width_ids; i++)
+        os << "-";
+    os << " | ";
     for (int i = 0; i < width_ids; i++)
         os << "-";
     os << " | ";
@@ -141,18 +125,19 @@ std::ostream& operator<<(std::ostream& os, const GeometryStore::GeoTestMap& map)
     os << " | ";
     for (int i = 0; i < width_volume; i++)
         os << "-";
+
     os << " | ";
     os << std::endl;
 
     // Table content
-    for (const auto key : map)
+    for (const auto& key : list)
     {
-        os << "| " << std::left << std::setw(width_ids) << key.first << " | "
-           << std::left << std::setw(width_ids) << key.second.copy_num << " | "
-           << std::left << std::setw(width_ids) << key.second.material_id
-           << " | " << std::setw(width_material) << key.second.material_name
-           << " | " << std::setw(width_volume) << key.second.name << " |"
-           << std::endl;
+        os << "| " << std::left << std::setw(width_ids) << key.volume_id
+           << " | " << std::left << std::setw(width_ids) << key.copy_num
+           << " | " << std::left << std::setw(width_ids) << key.num_replicas
+           << " | " << std::left << std::setw(width_ids) << key.material_id
+           << " | " << std::setw(width_material) << key.material_name << " | "
+           << std::setw(width_volume) << key.name << " |" << std::endl;
     }
 
     return os;

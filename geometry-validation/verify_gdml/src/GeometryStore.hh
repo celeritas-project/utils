@@ -11,8 +11,7 @@
 #include <iostream>
 #include <map>
 #include <string>
-#include <G4LogicalVolume.hh>
-#include <G4VPhysicalVolume.hh>
+#include <G4PhysicalVolumeStore.hh>
 
 #include "Data.hh"
 
@@ -28,29 +27,26 @@ class GeometryStore
     using GeoTestMap = std::map<unsigned int, Volume>;
     //!@}
 
-    // Construct empty
+    // Constructor
     GeometryStore();
-    // Constructor from world physical volume
-    GeometryStore(const G4VPhysicalVolume* world_physical_volume);
     // Default destructor
     ~GeometryStore() = default;
 
-    // Populate GeoTestMap from physical volume
-    void operator()(const G4VPhysicalVolume* world_physical_volume);
-
-    // Getter for the constructed map
-    const GeoTestMap& get_map() const;
+    // Get constructed map
+    std::vector<Volume> get_volumes() const;
 
     // Save a text output file with the data loaded in this->ids_volumes_
     void save(const std::string filename);
 
   private:
     // Recursive loop over logical volumes
-    void loop_volumes(const G4LogicalVolume* logical_volume);
+    void loop_volumes();
 
   private:
     // Map volume id with volume information
-    GeoTestMap ids_volumes_;
+    GeoTestMap             ids_volumes_;
+    G4PhysicalVolumeStore* phys_vol_store_;
+    std::vector<Volume>    volumes_;
 };
 
 //---------------------------------------------------------------------------//
@@ -58,5 +54,4 @@ class GeometryStore
 //---------------------------------------------------------------------------//
 
 // Define operator << to print a full table with GeoTestMap data.
-std::ostream&
-operator<<(std::ostream& os, const GeometryStore::GeoTestMap& map);
+std::ostream& operator<<(std::ostream& os, std::vector<Volume> map);
