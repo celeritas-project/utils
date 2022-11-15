@@ -1,5 +1,5 @@
 //----------------------------------*-C++-*----------------------------------//
-// Copyright 2021 UT-Battelle, LLC, and other Celeritas developers.
+// Copyright 2022 UT-Battelle, LLC, and other Celeritas developers.
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
@@ -51,7 +51,7 @@ void GeometryStore::save(const std::string filename)
 
 //---------------------------------------------------------------------------//
 /*!
- * Recursive loop to store all logical volumes.
+ * Loop to store all physical volumes.
  */
 void GeometryStore::loop_volumes()
 {
@@ -59,7 +59,7 @@ void GeometryStore::loop_volumes()
     {
         const auto& logical_volume = phys_vol->GetLogicalVolume();
 
-        Volume volume;
+        auto volume          = Volume();
         volume.name          = phys_vol->GetName();
         volume.volume_id     = phys_vol->GetInstanceID();
         volume.material_id   = logical_volume->GetMaterial()->GetIndex();
@@ -86,8 +86,8 @@ void GeometryStore::loop_volumes()
 std::ostream& operator<<(std::ostream& os, std::vector<Volume> list)
 {
     size_t width_ids      = 6;
-    size_t width_volume   = 0;
-    size_t width_material = 0;
+    size_t width_volume   = 10;
+    size_t width_material = 8;
 
     for (const auto& it : list)
     {
