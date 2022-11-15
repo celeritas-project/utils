@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     run_manager.RunInitialization();
 
     auto geometry_store = GeometryStore();
-    std::cout << geometry_store.get_volumes();
+    geometry_store.save("cmshllhc-parse.md");
 
     return EXIT_SUCCESS;
 }

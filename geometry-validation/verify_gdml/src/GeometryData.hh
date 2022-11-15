@@ -18,7 +18,8 @@ struct Volume
     int         volume_id;
     int         material_id;
     std::string material_name;
-    std::string name;
+    std::string physical_volume_name;
+    std::string logical_volume_name;
     int         copy_num;
     int         num_replicas;
 };

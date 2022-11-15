@@ -20,7 +20,6 @@
 GeometryStore::GeometryStore()
     : phys_vol_store_(G4PhysicalVolumeStore::GetInstance())
 {
-    std::cout << phys_vol_store_->size() << std::endl;
     this->loop_volumes();
 }
 
@@ -59,9 +58,10 @@ void GeometryStore::loop_volumes()
     {
         const auto& logical_volume = phys_vol->GetLogicalVolume();
 
-        auto volume          = Volume();
-        volume.name          = phys_vol->GetName();
-        volume.volume_id     = phys_vol->GetInstanceID();
+        auto volume                 = Volume();
+        volume.physical_volume_name = phys_vol->GetName();
+        volume.logical_volume_name  = logical_volume->GetName();
+        volume.volume_id            = phys_vol->GetInstanceID();
         volume.material_id   = logical_volume->GetMaterial()->GetIndex();
         volume.material_name = logical_volume->GetMaterial()->GetName();
         volume.copy_num      = phys_vol->GetCopyNo();
@@ -85,24 +85,28 @@ void GeometryStore::loop_volumes()
  */
 std::ostream& operator<<(std::ostream& os, std::vector<Volume> list)
 {
-    size_t width_ids      = 6;
-    size_t width_volume   = 10;
+    size_t width_ids      = 10;
+    size_t width_pv       = 12;
+    size_t width_lv       = 12;
     size_t width_material = 8;
 
     for (const auto& it : list)
     {
-        width_volume   = std::max(width_volume, it.name.size());
+        width_ids = std::max(width_ids, std::to_string(list.size()).size());
+        width_pv  = std::max(width_pv, it.physical_volume_name.size());
+        width_lv  = std::max(width_pv, it.logical_volume_name.size());
         width_material = std::max(width_material, it.material_name.size());
     }
 
     // Title
     os << std::endl;
     os << "| " << std::left << std::setw(width_ids) << "Vol ID"
-       << " | " << std::left << std::setw(width_ids) << "Copy"
-       << " | " << std::left << std::setw(width_ids) << "Repl"
+       << " | " << std::left << std::setw(width_ids) << "Copy Num"
+       << " | " << std::left << std::setw(width_ids) << "Replica"
        << " | " << std::left << std::setw(width_ids) << "Mat ID"
        << " | " << std::setw(width_material) << "Material"
-       << " | " << std::setw(width_volume) << "Volume"
+       << " | " << std::setw(width_pv) << "Phys. volume"
+       << " | " << std::setw(width_pv) << "Log. volume"
        << " |" << std::endl;
 
     // Dashed line
@@ -123,7 +127,10 @@ std::ostream& operator<<(std::ostream& os, std::vector<Volume> list)
     for (int i = 0; i < width_material; i++)
         os << "-";
     os << " | ";
-    for (int i = 0; i < width_volume; i++)
+    for (int i = 0; i < width_pv; i++)
+        os << "-";
+    os << " | ";
+    for (int i = 0; i < width_lv; i++)
         os << "-";
 
     os << " | ";
@@ -137,7 +144,9 @@ std::ostream& operator<<(std::ostream& os, std::vector<Volume> list)
            << " | " << std::left << std::setw(width_ids) << key.num_replicas
            << " | " << std::left << std::setw(width_ids) << key.material_id
            << " | " << std::setw(width_material) << key.material_name << " | "
-           << std::setw(width_volume) << key.name << " |" << std::endl;
+           << std::setw(width_pv) << key.physical_volume_name << " | "
+           << std::setw(width_lv) << key.logical_volume_name << " | "
+           << std::endl;
     }
 
     return os;

@@ -13,7 +13,7 @@
 #include <string>
 #include <G4PhysicalVolumeStore.hh>
 
-#include "Data.hh"
+#include "GeometryData.hh"
 
 //---------------------------------------------------------------------------//
 /*!
