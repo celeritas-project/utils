@@ -13,6 +13,7 @@
 #include <VecGeom/gdml/Frontend.h>
 #include <VecGeom/gdml/Middleware.h>
 #include <VecGeom/management/GeoManager.h>
+#include <VecGeom/volumes/PlacedVolume.h>
 
 namespace vgapp
 {
@@ -24,6 +25,9 @@ struct Volume
 {
     std::string volume_name;
     std::string material_name;
+    int numPlaced = 0;
+    int copyNumMin = 9999;
+    int copyNumMax = -1;
 };
 
 // Map volume id and Volume
@@ -52,7 +56,8 @@ std::ostream& operator<<(std::ostream& os, const vgapp::VolumeMap& map)
     os << "| " << std::left << std::setw(width_ids) << "Vol ID"
        << " | " << std::setw(width_material) << "Material"
        << " | " << std::setw(width_volume) << "Volume"
-       << " |" << std::endl;
+       << " |" << " #placed (minCopyNum - maxCopyNum)"
+       << std::endl;
 
     // Dashed line
     os << "| ";
@@ -72,7 +77,9 @@ std::ostream& operator<<(std::ostream& os, const vgapp::VolumeMap& map)
     {
         os << "| " << std::left << std::setw(width_ids) << key.first << " | "
            << std::setw(width_material) << key.second.material_name << " | "
-           << std::setw(width_volume) << key.second.volume_name << " |"
+           << std::setw(width_volume) << key.second.volume_name << " | "
+	   << std::setw(width_ids) << std::right << key.second.numPlaced
+	   <<" ("<< key.second.copyNumMin <<"-"<< key.second.copyNumMax <<")"
            << std::endl;
     }
 
@@ -115,6 +122,34 @@ int main(int argc, char* argv[])
         volume.volume_name   = vg_volume->GetLabel();
         volume.material_name = vol_mat_map.find(vg_volume->id())->second.name;
         volume_map.insert({vg_volume->id(), volume});
+    }
+
+    // Placed volumes
+    auto& geomgr = vecgeom::GeoManager::Instance();
+    std::vector<vecgeom::VPlacedVolume*> placed_volumes;
+    geomgr.getAllPlacedVolumes(placed_volumes);
+    std::cout<<" GeoManager: AllPlVol.size="<< placed_volumes.size()
+	     <<" PlVolsCount="<< geomgr.GetPlacedVolumesCount()
+	     <<" NodeCount="<< geomgr.GetTotalNodeCount()
+	     <<"\n";
+
+    for (const auto& plvol : placed_volumes)
+    {
+	int copynum = plvol->GetCopyNo();
+	// get its logical volume
+        vecgeom::LogicalVolume const* logvol = plvol->GetLogicalVolume();
+	int volid = logvol->id();
+	std::map<int, vgapp::Volume>::iterator iter = volume_map.find(volid);
+	if (iter != volume_map.end())
+        {
+            auto& volume = iter->second;
+            volume.numPlaced++;
+	    if (volume.copyNumMin > copynum)  volume.copyNumMin = copynum;
+	    if (volume.copyNumMax < copynum)  volume.copyNumMax = copynum;
+        }
+	else {
+	  std::cerr<<"*** Not found: id="<< logvol->id() << std::endl;
+	}
     }
 
     std::ofstream output;
