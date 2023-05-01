@@ -25,9 +25,9 @@ struct Volume
 {
     std::string volume_name;
     std::string material_name;
-    int numPlaced = 0;
+    int num_placed = 0;
     int min_copy_num = std::numeric_limits<int>::digits10;
-    int copyNumMax = -1;
+    int max_copy_num = -1;
 };
 
 // Map volume id and Volume
@@ -42,8 +42,11 @@ using VolumeMap = std::map<int, Volume>;
 std::ostream& operator<<(std::ostream& os, const vgapp::VolumeMap& map)
 {
     size_t width_ids      = 7;
-    size_t width_volume   = 0;
-    size_t width_material = 0;
+    size_t width_volume   = 6;
+    size_t width_material = 8;
+    size_t width_placed   = 11;
+    size_t width_copy     = 12;
+
     for (const auto& it : map)
     {
         width_volume = std::max(width_volume, it.second.volume_name.size());
@@ -56,19 +59,29 @@ std::ostream& operator<<(std::ostream& os, const vgapp::VolumeMap& map)
     os << "| " << std::left << std::setw(width_ids) << "Vol ID"
        << " | " << std::setw(width_material) << "Material"
        << " | " << std::setw(width_volume) << "Volume"
-       << " |" << " #placed (minCopyNum - maxCopyNum)"
-       << std::endl;
+       << " | " << std::setw(width_placed) << "Num placed"
+       << " | " << std::setw(width_copy) << "Min copy num"
+       << " | " << std::setw(width_copy) << "Max copy num |" << std::endl;
 
     // Dashed line
     os << "| ";
     for (int i = 0; i < width_ids; i++)
-        os << "-";
+        os << '-';
     os << " | ";
     for (int i = 0; i < width_material; i++)
-        os << "-";
+        os << '-';
     os << " | ";
     for (int i = 0; i < width_volume; i++)
-        os << "-";
+        os << '-';
+    os << " | ";
+    for (int i = 0; i < width_placed; i++)
+        os << '-';
+    os << " | ";
+    for (int i = 0; i < width_copy; i++)
+        os << '-';
+    os << " | ";
+    for (int i = 0; i < width_copy; i++)
+        os << '-';
     os << " |";
     os << std::endl;
 
@@ -78,8 +91,9 @@ std::ostream& operator<<(std::ostream& os, const vgapp::VolumeMap& map)
         os << "| " << std::left << std::setw(width_ids) << key.first << " | "
            << std::setw(width_material) << key.second.material_name << " | "
            << std::setw(width_volume) << key.second.volume_name << " | "
-	   << std::setw(width_ids) << std::right << key.second.numPlaced
-	   <<" ("<< key.second.copyNumMin <<"-"<< key.second.copyNumMax <<")"
+           << std::setw(width_placed) << key.second.num_placed << " | "
+           << std::setw(width_copy) << key.second.min_copy_num << " | "
+           << std::setw(width_copy) << key.second.max_copy_num << " |"
            << std::endl;
     }
 
@@ -143,9 +157,9 @@ int main(int argc, char* argv[])
 	if (iter != volume_map.end())
         {
             auto& volume = iter->second;
-            volume.numPlaced++;
+            volume.num_placed++;
 	    volume.min_copy_num = std::min(volume.min_copy_num, copynum);
-  	    volume.max_copy_num = std::max(volume.max_copy_num, copynum);
+	    volume.max_copy_num = std::max(volume.max_copy_num, copynum);
         }
 	else {
 	  std::cerr<<"*** Not found: id="<< logvol->id() << std::endl;
