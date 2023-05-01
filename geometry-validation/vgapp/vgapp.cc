@@ -144,8 +144,8 @@ int main(int argc, char* argv[])
         {
             auto& volume = iter->second;
             volume.numPlaced++;
-	    if (volume.copyNumMin > copynum)  volume.copyNumMin = copynum;
-	    if (volume.copyNumMax < copynum)  volume.copyNumMax = copynum;
+	    volume.min_copy_num = std::min(volume.min_copy_num, copynum);
+  	    volume.max_copy_num = std::max(volume.max_copy_num, copynum);
         }
 	else {
 	  std::cerr<<"*** Not found: id="<< logvol->id() << std::endl;
