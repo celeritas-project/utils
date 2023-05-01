@@ -26,7 +26,7 @@ struct Volume
     std::string volume_name;
     std::string material_name;
     int numPlaced = 0;
-    int copyNumMin = 9999;
+    int min_copy_num = std::numeric_limits<int>::digits10;
     int copyNumMax = -1;
 };
 
