@@ -35,7 +35,7 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
         int num_z;
     };
 
-    // Construct with geometry type
+    // Construct with geometry type and number of segments
     SegmentedSimpleCmsDetector(MaterialType type, SegmentDefinition segments);
 
     // Construct geometry

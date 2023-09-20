@@ -22,7 +22,7 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct with geometry type enum.
+ * Construct with geometry type enum and number of segments.
  */
 SegmentedSimpleCmsDetector::SegmentedSimpleCmsDetector(
     MaterialType type, SegmentDefinition segments)
@@ -127,8 +127,8 @@ SegmentedSimpleCmsDetector::build_materials()
 /*!
  * Programmatic geometry definition: Segmented simple CMS mock up.
  *
- * This is a set of single-element concentric cylinders that acts as a
- * cylindrical cow in a vacuum version of CMS.
+ * This is a set of single-element concentric cylinders that can be split
+ * multiple times in each direction, to generate a large numbers of volumes.
  *
  * - The World volume is a box, and its dimensions are expressed in cartesian
  * coordinates [x. y, z].
@@ -145,20 +145,12 @@ SegmentedSimpleCmsDetector::build_materials()
  * | superconducting solenoid     | Ti               | [275, 375, 1400]   |
  * | muon chambers                | Fe               | [375, 700, 1400]   |
  *
- * - Different distances between volumes are set so that geometry navigation
- * can be tested. These values are defined in \c volume_gaps_ . Current
- * configuration uses:
+ * Table shows the full cylinder values. Each of those cylinders can be
+ * segmented in every direction. The sum of all segments will add up to the
+ * above values.
  *
- * | Volume                       | Gap type   |
- * | ---------------------------- | ---------- |
- * | world                        | N/A        |
- * | vacuum tube                  | tolerance  |
- * | silicon tracker              | tolerance  |
- * | electromagnetic calorimeter  | overlap    |
- * | hadron calorimeter           | overlap    |
- * | superconducting solenoid     | millimeter |
- * | muon chambers                | N/A        |
- *
+ * E.g.: If the silicon tracker is segmented in 2 in the radial axis, it will
+ * become si_tracker_1 (r = [30, 77.5]) and si_tracker_2 (r = [77.5, 125]).
  */
 G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
 {
