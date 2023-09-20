@@ -11,6 +11,7 @@
 #include <string>
 #include <G4Material.hh>
 #include <G4SystemOfUnits.hh>
+#include <G4Tubs.hh>
 #include <G4VPhysicalVolume.hh>
 #include <G4VUserDetectorConstruction.hh>
 
@@ -53,28 +54,10 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
         G4Material* had_calorimeter;
         G4Material* sc_solenoid;
         G4Material* muon_chambers;
-    };
+    } materials_;
 
-#if 0
-    // Volume sizes
-    struct VolumeSize
-    {
-        double half_z_len = 7 * m;
-        double vacuum_tube_r = 30 * cm;
-        double si_tracker_r = 125 * cm - vacuum_tube_r;
-        double em_calorimeter_r = 175 * cm - si_tracker_r;
-        double had_calorimeter_r = 275 * cm - em_calorimeter_r;
-        double sc_solenoid_r = 375 * cm - em_calorimeter_r;
-        double mu_chambers_r = 700 * cm - em_calorimeter_r;
-    } const static volume_size_;
-
-    struct VolumeRadiusLimit
-    {
-        double vacuum_tube[2] = {0, volume_size_.vacuum_tube_r};
-        double s_tracker[2]
-            = {vacuum_tube[1], vacuum_tube[1] + volume_size_.si_tracker_r};
-    } const static volume_r_lim_;
-#endif
+    // Cylinder half length
+    double const half_length_{7 * m};
 
     // Select simple/composite geometry
     MaterialType geometry_type_;
@@ -85,8 +68,18 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
   private:
     // Segmented simple CMS
     G4VPhysicalVolume* segmented_simple_cms();
+
     // Set sensitive detectors
     void set_sd();
+
     // Build material list based on MaterialType
     MaterialList build_materials();
+
+    // Construct segments for each main cylinder
+    void create_segments(std::string name,
+                         double inner_r,
+                         double outer_r,
+                         G4Tubs* full_culinder_def,
+                         G4LogicalVolume* full_cylinder_lv,
+                         G4Material* cyl_material);
 };

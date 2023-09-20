@@ -11,10 +11,10 @@
 #include <G4Colour.hh>
 #include <G4LogicalVolume.hh>
 #include <G4NistManager.hh>
+#include <G4PVDivision.hh>
 #include <G4PVPlacement.hh>
 #include <G4PVReplica.hh>
 #include <G4SDManager.hh>
-#include <G4Tubs.hh>
 #include <G4VisAttributes.hh>
 
 #include "core/SensitiveDetector.hh"
@@ -27,6 +27,7 @@ SegmentedSimpleCmsDetector::SegmentedSimpleCmsDetector(
     MaterialType type, SegmentDefinition segments)
     : geometry_type_(type), num_segments_(segments)
 {
+    materials_ = this->build_materials();
 }
 
 //---------------------------------------------------------------------------//
@@ -152,13 +153,8 @@ SegmentedSimpleCmsDetector::build_materials()
  */
 G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
 {
-    // Set up material list
-    MaterialList materials = this->build_materials();
-
     // Size of World volume
     double const world_size = 20 * m;
-    // Half length of all concentric cylinders (z-axis)
-    double const half_length = 7 * m;
 
     struct VolumeGap
     {
@@ -167,12 +163,22 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
         double tolerance{1e-9 * mm};
     } const volume_gaps;
 
+    struct CylinderRadius
+    {
+        double vacuum_tube{30 * cm};
+        double si_tracker{125 * cm};
+        double em_calo{175 * cm};
+        double had_calo{275 * cm};
+        double sc_solenoid{375 * cm};
+        double muon_chambers{700 * cm};
+    } const radius;
+
     // World volume
     G4Box* world_def
-        = new G4Box("world_box", world_size / 2, world_size / 2, world_size);
+        = new G4Box("world_def", world_size / 2, world_size / 2, world_size);
 
     auto const world_lv
-        = new G4LogicalVolume(world_def, materials.world, "world");
+        = new G4LogicalVolume(world_def, materials_.world, "world");
 
     auto const world_pv = new G4PVPlacement(0,  // Rotation matrix
                                             G4ThreeVector(),  // Position
@@ -186,15 +192,15 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
     //// Set up mother tubes needed for the material segments
 
     // Vacuum tube
-    G4Tubs* vacuum_tube_def = new G4Tubs("lhc_vacuum_tube",
+    G4Tubs* vacuum_tube_def = new G4Tubs("vacuum_tube_def",
                                          0,  // Inner radius
-                                         30 * cm,  // Outer radius
-                                         half_length,  // Half-length z
+                                         radius.vacuum_tube,  // Outer radius
+                                         half_length_,  // Half-length z
                                          0 * deg,  // Start angle
                                          360 * deg);  // Spanning angle
 
     auto const vacuum_tube_lv = new G4LogicalVolume(
-        vacuum_tube_def, materials.vacuum_tube, "vacuum_tube");
+        vacuum_tube_def, materials_.vacuum_tube, "vacuum_tube_lv");
 
     new G4PVPlacement(0,
                       G4ThreeVector(),  // Spans -z/2 to +z/2
@@ -206,11 +212,15 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                       false);
 
     // Si tracker
-    G4Tubs* si_tracker_def = new G4Tubs(
-        "silicon_tracker", 30 * cm, 125 * cm, half_length, 0 * deg, 360 * deg);
+    G4Tubs* si_tracker_def = new G4Tubs("si_tracker_def",
+                                        radius.vacuum_tube,
+                                        radius.si_tracker,
+                                        half_length_,
+                                        0 * deg,
+                                        360 * deg);
 
     auto const si_tracker_lv
-        = new G4LogicalVolume(si_tracker_def, materials.world, "si_tracker");
+        = new G4LogicalVolume(si_tracker_def, materials_.world, "si_tracker");
 
     auto si_tracker_pv = new G4PVPlacement(0,
                                            G4ThreeVector(),
@@ -221,15 +231,15 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                                            0,
                                            false);
     // EM calorimeter
-    G4Tubs* em_calorimeter_def = new G4Tubs("crystal_em_calorimeter",
-                                            125 * cm,
-                                            175 * cm - volume_gaps.overlap,
-                                            half_length,
+    G4Tubs* em_calorimeter_def = new G4Tubs("em_calorimeter_def",
+                                            radius.si_tracker,
+                                            radius.em_calo,
+                                            half_length_,
                                             0 * deg,
                                             360 * deg);
 
     auto const em_calorimeter_lv = new G4LogicalVolume(
-        em_calorimeter_def, materials.world, "em_calorimeter");
+        em_calorimeter_def, materials_.world, "em_calorimeter_lv");
 
     new G4PVPlacement(0,
                       G4ThreeVector(),
@@ -241,15 +251,15 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                       false);
 
     // Hadron calorimeter
-    G4Tubs* had_calorimeter_def = new G4Tubs("hadron_calorimeter",
-                                             175 * cm,
-                                             275 * cm - volume_gaps.overlap,
-                                             half_length,
+    G4Tubs* had_calorimeter_def = new G4Tubs("had_calorimeter_def",
+                                             radius.em_calo,
+                                             radius.had_calo,
+                                             half_length_,
                                              0 * deg,
                                              360 * deg);
 
     auto const had_calorimeter_lv = new G4LogicalVolume(
-        had_calorimeter_def, materials.world, "had_calorimeter");
+        had_calorimeter_def, materials_.world, "had_calorimeter_lv");
 
     new G4PVPlacement(0,
                       G4ThreeVector(),
@@ -261,15 +271,15 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                       false);
 
     // Superconducting solenoid
-    G4Tubs* sc_solenoid_def = new G4Tubs("superconducting_solenoid",
-                                         275 * cm,
-                                         375 * cm - volume_gaps.millimeter,
-                                         half_length,
+    G4Tubs* sc_solenoid_def = new G4Tubs("sc_solenoid_def",
+                                         radius.had_calo,
+                                         radius.sc_solenoid,
+                                         half_length_,
                                          0 * deg,
                                          360 * deg);
 
-    auto const sc_solenoid_lv
-        = new G4LogicalVolume(sc_solenoid_def, materials.world, "sc_solenoid");
+    auto const sc_solenoid_lv = new G4LogicalVolume(
+        sc_solenoid_def, materials_.world, "sc_solenoid_lv");
 
     new G4PVPlacement(0,
                       G4ThreeVector(),
@@ -281,15 +291,15 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                       false);
 
     // Muon chambers
-    G4Tubs* muon_chambers_def = new G4Tubs("iron_muon_chambers",
-                                           375 * cm,
-                                           700 * cm,
-                                           half_length,
+    G4Tubs* muon_chambers_def = new G4Tubs("muon_chambers_def",
+                                           radius.sc_solenoid,
+                                           radius.muon_chambers,
+                                           half_length_,
                                            0 * deg,
                                            360 * deg);
 
     auto const muon_chambers_lv = new G4LogicalVolume(
-        muon_chambers_def, materials.world, "muon_chambers_lv");
+        muon_chambers_def, materials_.world, "muon_chambers_lv");
 
     new G4PVPlacement(0,
                       G4ThreeVector(),
@@ -300,56 +310,86 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                       0,
                       false);
 
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -//
     //// Segmented elements
+
     double const segment_theta = 2 * CLHEP::pi / num_segments_.num_theta;
 
     // Si tracker segments
-    G4Tubs* si_tracker_segment_def = new G4Tubs("silicon_tracker_segment",
-                                                30 * cm,
-                                                125 * cm,
-                                                half_length,
-                                                -segment_theta / 2,
-                                                segment_theta / 2);
+    G4Tubs* si_tracker_segment_theta_def
+        = new G4Tubs("si_tracker_segment_theta",
+                     radius.vacuum_tube,
+                     radius.si_tracker,
+                     half_length_,
+                     0,
+                     segment_theta);
 
-    auto const si_tracker_segment_lv = new G4LogicalVolume(
-        si_tracker_def, materials.world, "si_tracker_segment");
+    auto const si_tracker_segment_theta_lv = new G4LogicalVolume(
+        si_tracker_def, materials_.world, "si_tracker_segment_theta_lv");
 
-    new G4PVReplica("si_tracker_segmented_pv",
-                    si_tracker_segment_lv,
+    // - - - - - -
+
+    double const si_segment_r = (radius.si_tracker - radius.vacuum_tube)
+                                / num_segments_.num_r;
+
+    G4Tubs* si_tracker_segment_r_def
+        = new G4Tubs("si_tracker_segment_r_def",
+                     radius.vacuum_tube,
+                     radius.vacuum_tube + si_segment_r,
+                     half_length_,
+                     0,
+                     segment_theta);
+
+    auto const si_tracker_segment_r_lv = new G4LogicalVolume(
+        si_tracker_segment_r_def, materials_.world, "si_tracker_segment_r_lv");
+
+    new G4PVReplica("si_tracker_segment_r_pv",
+                    si_tracker_segment_r_lv,
+                    si_tracker_segment_theta_lv,
+                    EAxis::kRho,
+                    (G4int)num_segments_.num_r,
+                    0);
+
+    new G4PVReplica("si_tracker_segment_theta_pv",
+                    si_tracker_segment_theta_lv,
                     si_tracker_lv,
                     EAxis::kPhi,
                     num_segments_.num_theta,
                     segment_theta);
 
-    double const si_segment_r = (125 * cm - 30 * cm) / num_segments_.num_r;
+    double const si_segment_z = 2 * half_length_ / num_segments_.num_z;
 
-    G4Tubs* si_tracker_segment_def_r = new G4Tubs("silicon_tracker_segment_r",
-                                                  30 * cm,
-                                                  30 * cm + si_segment_r,
-                                                  half_length,
-                                                  -segment_theta / 2,
-                                                  segment_theta / 2);
+    G4Tubs* si_tracker_segment_z_def
+        = new G4Tubs("si_tracker_segment_z_def",
+                     radius.vacuum_tube,
+                     radius.vacuum_tube + si_segment_r,
+                     si_segment_z / 2,
+                     0,
+                     segment_theta);
 
-    auto const si_tracker_segment_r_lv = new G4LogicalVolume(
-        si_tracker_segment_def, materials.si_tracker, "si_tracker_segment_r");
+    auto const si_tracker_segment_z_lv
+        = new G4LogicalVolume(si_tracker_segment_z_def,
+                              materials_.si_tracker,
+                              "si_tracker_segment_z_lv");
 
-    new G4PVReplica("si_tracker_segmented_r_pv",
-                    si_tracker_segment_r_lv,
-                    si_tracker_segment_lv,
-                    EAxis::kRho,
-                    num_segments_.num_r,
-                    segment_theta);
+    new G4PVDivision("si_tracker_segment_z_pv",
+                     si_tracker_segment_z_lv,
+                     si_tracker_segment_r_lv,
+                     EAxis::kZAxis,
+                     (G4int)num_segments_.num_z,
+                     0);
 
+#if 0
     // EM calorimeter segments
     G4Tubs* em_calo_segment_def = new G4Tubs("em_calorimeter_segment",
                                              125 * cm,
                                              175 * cm,
-                                             half_length,
-                                             -segment_theta / 2,
-                                             segment_theta / 2);
+                                             half_length_,
+                                             0,
+                                             segment_theta);
 
     auto const em_calo_segment_lv = new G4LogicalVolume(
-        em_calorimeter_def, materials.em_calorimeter, "em_calo_segment_lv");
+        em_calorimeter_def, materials_.em_calorimeter, "em_calo_segment_lv");
 
     new G4PVReplica("em_calo_segmented_pv",
                     em_calo_segment_lv,
@@ -362,12 +402,12 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
     G4Tubs* had_calo_segment_def = new G4Tubs("had_calorimeter_segment",
                                               175 * cm,
                                               275 * cm,
-                                              half_length,
-                                              -segment_theta / 2,
-                                              segment_theta / 2);
+                                              half_length_,
+                                              0,
+                                              segment_theta );
 
     auto const had_calo_segment_lv = new G4LogicalVolume(
-        had_calorimeter_def, materials.had_calorimeter, "had_calo_segment_lv");
+        had_calorimeter_def, materials_.had_calorimeter, "had_calo_segment_lv");
 
     new G4PVReplica("had_calo_segmented_pv",
                     had_calo_segment_lv,
@@ -380,12 +420,12 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
     G4Tubs* sc_solenoid_segment_def = new G4Tubs("sc_solenoid_segment",
                                                  275 * cm,
                                                  375 * cm,
-                                                 half_length,
-                                                 -segment_theta / 2,
-                                                 segment_theta / 2);
+                                                 half_length_,
+                                                 0,
+                                                 segment_theta );
 
     auto const sc_solenoid_segment_lv = new G4LogicalVolume(
-        sc_solenoid_def, materials.sc_solenoid, "sc_solenoid_segment_lv");
+        sc_solenoid_def, materials_.sc_solenoid, "sc_solenoid_segment_lv");
 
     new G4PVReplica("sc_solenoid_segmented_pv",
                     sc_solenoid_segment_lv,
@@ -398,12 +438,12 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
     G4Tubs* muon_chambers_segment_def = new G4Tubs("muon_chambers_segment",
                                                    375 * cm,
                                                    700 * cm,
-                                                   half_length,
-                                                   -segment_theta / 2,
-                                                   segment_theta / 2);
+                                                   half_length_,
+                                                   0,
+                                                   segment_theta);
 
     auto const muon_chambers_segment_lv = new G4LogicalVolume(
-        muon_chambers_def, materials.muon_chambers, "muon_chambers_segment_lv");
+        muon_chambers_def, materials_.muon_chambers, "muon_chambers_segment_lv");
 
     new G4PVReplica("muon_chambers_segmented_pv",
                     muon_chambers_segment_lv,
@@ -411,6 +451,7 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                     EAxis::kPhi,
                     num_segments_.num_theta,
                     segment_theta);
+#endif
 
     return world_pv;
 }
@@ -422,4 +463,83 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
 void SegmentedSimpleCmsDetector::set_sd()
 {
     // TODO
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * TODO
+ */
+void SegmentedSimpleCmsDetector::create_segments(
+    std::string name,
+    double inner_r,
+    double outer_r,
+    G4Tubs* full_culinder_def,
+    G4LogicalVolume* full_cylinder_lv,
+    G4Material* cyl_material)
+{
+    std::string name_segment = name + "_segment";
+    std::string name_theta = name_segment + "_theta";
+    std::string name_r = name_segment + "_r";
+    std::string name_z = name_segment + "_z";
+
+    // Theta
+    double const segment_theta = 2 * CLHEP::pi / num_segments_.num_theta;
+
+    std::string name_theta_def = name_theta + "_def";
+    G4Tubs* segment_theta_def = new G4Tubs(
+        name_theta_def, inner_r, outer_r, half_length_, 0, segment_theta);
+
+    std::string name_theta_lv = name_theta + "_lv";
+    auto const segment_theta_lv = new G4LogicalVolume(
+        full_culinder_def, materials_.world, name_theta_lv);
+
+    // R
+    double const segment_r = (outer_r - inner_r) / num_segments_.num_r;
+
+    std::string name_r_def = name_r + "_def";
+    G4Tubs* segment_r_def = new G4Tubs(
+        name_r_def, inner_r, inner_r + segment_r, half_length_, 0, segment_theta);
+
+    std::string name_r_lv = name_r + "_lv";
+    auto const segment_r_lv
+        = new G4LogicalVolume(segment_r_def, materials_.world, name_r_lv);
+
+    std::string name_r_pv = name_r + "_pv";
+    new G4PVReplica(name_r_pv,
+                    segment_r_lv,
+                    segment_theta_lv,
+                    EAxis::kRho,
+                    (G4int)num_segments_.num_r,
+                    0);
+
+    std::string name_theta_pv = name_theta + "_pv";
+    new G4PVReplica(name_theta_pv,
+                    segment_theta_lv,
+                    full_cylinder_lv,
+                    EAxis::kPhi,
+                    num_segments_.num_theta,
+                    segment_theta);
+
+    // Z
+    double const segment_z = 2 * half_length_ / num_segments_.num_z;
+
+    std::string name_z_def = name_z + "_def";
+    G4Tubs* si_tracker_segment_z_def = new G4Tubs(name_z_def,
+                                                  inner_r,
+                                                  inner_r + segment_r,
+                                                  segment_z / 2,
+                                                  0,
+                                                  segment_theta);
+
+    std::string name_z_lv = name_z + "_lv";
+    auto const si_tracker_segment_z_lv = new G4LogicalVolume(
+        si_tracker_segment_z_def, cyl_material, name_z_lv);
+
+    std::string name_z_pv = name_z + "_pv";
+    new G4PVDivision(name_z_pv,
+                     si_tracker_segment_z_lv,
+                     segment_r_lv,
+                     EAxis::kZAxis,
+                     (G4int)num_segments_.num_z,
+                     0);
 }

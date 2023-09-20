@@ -124,54 +124,61 @@ int main(int argc, char* argv[])
             run_manager->SetUserInitialization(new BoxDetector());
             gdml_filename = "box.gdml";
             break;
+
         case GeometryID::simple_cms:
             run_manager->SetUserInitialization(
                 new SimpleCMSDetector(CMSType::simple));
             gdml_filename = "simple-cms.gdml";
             break;
+
         case GeometryID::simple_cms_composite:
             run_manager->SetUserInitialization(
                 new SimpleCMSDetector(CMSType::composite));
             gdml_filename = "composite-simple-cms.gdml";
             break;
+
         case GeometryID::segmented_simple_cms:
             SegmentedSimpleCmsDetector::SegmentDefinition def;
             def.num_r = 2;
             def.num_theta = 20;
-            def.num_z = 1;
+            def.num_z = 3;
             run_manager->SetUserInitialization(
                 new SegmentedSimpleCmsDetector(SCMSType::composite, def));
             gdml_filename = "composite-segmented-simple-cms.gdml";
             break;
+
         case GeometryID::testem3:
             run_manager->SetUserInitialization(new TestEm3Detector(
                 TestEm3MatType::simple, TestEm3GeoType::hierarchical));
             gdml_filename = "testem3.gdml";
             break;
+
         case GeometryID::testem3_composite:
             run_manager->SetUserInitialization(new TestEm3Detector(
                 TestEm3MatType::composite, TestEm3GeoType::hierarchical));
             gdml_filename = "testem3-composite.gdml";
             break;
+
         case GeometryID::testem3_flat:
             run_manager->SetUserInitialization(new TestEm3Detector(
                 TestEm3MatType::simple, TestEm3GeoType::flat));
             gdml_filename = "testem3-flat.gdml";
             break;
+
         case GeometryID::testem3_composite_flat:
             run_manager->SetUserInitialization(new TestEm3Detector(
                 TestEm3MatType::composite, TestEm3GeoType::flat));
             gdml_filename = "testem3-flat-composite.gdml";
             break;
+
         default:
             std::cout << (int)geometry_id << " is an invalid geometry id."
                       << std::endl;
             return EXIT_FAILURE;
     }
 
-    // Load phisics list, particle gun, and initialize run manager
+    // Load phisics list and initialize run manager
     run_manager->SetUserInitialization(new PhysicsList(range_cuts));
-    // run_manager->SetUserInitialization(new ActionInitialization());
     run_manager->Initialize();
     run_manager->RunInitialization();
 
