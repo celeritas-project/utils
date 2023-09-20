@@ -310,148 +310,41 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                       0,
                       false);
 
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -//
-    //// Segmented elements
+    // Add segmented elements
+    this->create_segments("si_tracker",
+                          radius.vacuum_tube,
+                          radius.si_tracker,
+                          si_tracker_def,
+                          si_tracker_lv,
+                          materials_.si_tracker);
 
-    double const segment_theta = 2 * CLHEP::pi / num_segments_.num_theta;
+    this->create_segments("em_calorimeter",
+                          radius.si_tracker,
+                          radius.em_calo,
+                          em_calorimeter_def,
+                          em_calorimeter_lv,
+                          materials_.em_calorimeter);
 
-    // Si tracker segments
-    G4Tubs* si_tracker_segment_theta_def
-        = new G4Tubs("si_tracker_segment_theta",
-                     radius.vacuum_tube,
-                     radius.si_tracker,
-                     half_length_,
-                     0,
-                     segment_theta);
+    this->create_segments("had_calorimeter",
+                          radius.em_calo,
+                          radius.had_calo,
+                          had_calorimeter_def,
+                          had_calorimeter_lv,
+                          materials_.had_calorimeter);
 
-    auto const si_tracker_segment_theta_lv = new G4LogicalVolume(
-        si_tracker_def, materials_.world, "si_tracker_segment_theta_lv");
+    this->create_segments("sc_solenoid",
+                          radius.had_calo,
+                          radius.sc_solenoid,
+                          sc_solenoid_def,
+                          sc_solenoid_lv,
+                          materials_.sc_solenoid);
 
-    // - - - - - -
-
-    double const si_segment_r = (radius.si_tracker - radius.vacuum_tube)
-                                / num_segments_.num_r;
-
-    G4Tubs* si_tracker_segment_r_def
-        = new G4Tubs("si_tracker_segment_r_def",
-                     radius.vacuum_tube,
-                     radius.vacuum_tube + si_segment_r,
-                     half_length_,
-                     0,
-                     segment_theta);
-
-    auto const si_tracker_segment_r_lv = new G4LogicalVolume(
-        si_tracker_segment_r_def, materials_.world, "si_tracker_segment_r_lv");
-
-    new G4PVReplica("si_tracker_segment_r_pv",
-                    si_tracker_segment_r_lv,
-                    si_tracker_segment_theta_lv,
-                    EAxis::kRho,
-                    (G4int)num_segments_.num_r,
-                    0);
-
-    new G4PVReplica("si_tracker_segment_theta_pv",
-                    si_tracker_segment_theta_lv,
-                    si_tracker_lv,
-                    EAxis::kPhi,
-                    num_segments_.num_theta,
-                    segment_theta);
-
-    double const si_segment_z = 2 * half_length_ / num_segments_.num_z;
-
-    G4Tubs* si_tracker_segment_z_def
-        = new G4Tubs("si_tracker_segment_z_def",
-                     radius.vacuum_tube,
-                     radius.vacuum_tube + si_segment_r,
-                     si_segment_z / 2,
-                     0,
-                     segment_theta);
-
-    auto const si_tracker_segment_z_lv
-        = new G4LogicalVolume(si_tracker_segment_z_def,
-                              materials_.si_tracker,
-                              "si_tracker_segment_z_lv");
-
-    new G4PVDivision("si_tracker_segment_z_pv",
-                     si_tracker_segment_z_lv,
-                     si_tracker_segment_r_lv,
-                     EAxis::kZAxis,
-                     (G4int)num_segments_.num_z,
-                     0);
-
-#if 0
-    // EM calorimeter segments
-    G4Tubs* em_calo_segment_def = new G4Tubs("em_calorimeter_segment",
-                                             125 * cm,
-                                             175 * cm,
-                                             half_length_,
-                                             0,
-                                             segment_theta);
-
-    auto const em_calo_segment_lv = new G4LogicalVolume(
-        em_calorimeter_def, materials_.em_calorimeter, "em_calo_segment_lv");
-
-    new G4PVReplica("em_calo_segmented_pv",
-                    em_calo_segment_lv,
-                    em_calorimeter_lv,
-                    EAxis::kPhi,
-                    num_segments_.num_theta,
-                    segment_theta);
-
-    // Hadron calorimeter segments
-    G4Tubs* had_calo_segment_def = new G4Tubs("had_calorimeter_segment",
-                                              175 * cm,
-                                              275 * cm,
-                                              half_length_,
-                                              0,
-                                              segment_theta );
-
-    auto const had_calo_segment_lv = new G4LogicalVolume(
-        had_calorimeter_def, materials_.had_calorimeter, "had_calo_segment_lv");
-
-    new G4PVReplica("had_calo_segmented_pv",
-                    had_calo_segment_lv,
-                    had_calorimeter_lv,
-                    EAxis::kPhi,
-                    num_segments_.num_theta,
-                    segment_theta);
-
-    // SC solenoid
-    G4Tubs* sc_solenoid_segment_def = new G4Tubs("sc_solenoid_segment",
-                                                 275 * cm,
-                                                 375 * cm,
-                                                 half_length_,
-                                                 0,
-                                                 segment_theta );
-
-    auto const sc_solenoid_segment_lv = new G4LogicalVolume(
-        sc_solenoid_def, materials_.sc_solenoid, "sc_solenoid_segment_lv");
-
-    new G4PVReplica("sc_solenoid_segmented_pv",
-                    sc_solenoid_segment_lv,
-                    sc_solenoid_lv,
-                    EAxis::kPhi,
-                    num_segments_.num_theta,
-                    segment_theta);
-
-    // Muon chambers
-    G4Tubs* muon_chambers_segment_def = new G4Tubs("muon_chambers_segment",
-                                                   375 * cm,
-                                                   700 * cm,
-                                                   half_length_,
-                                                   0,
-                                                   segment_theta);
-
-    auto const muon_chambers_segment_lv = new G4LogicalVolume(
-        muon_chambers_def, materials_.muon_chambers, "muon_chambers_segment_lv");
-
-    new G4PVReplica("muon_chambers_segmented_pv",
-                    muon_chambers_segment_lv,
-                    muon_chambers_lv,
-                    EAxis::kPhi,
-                    num_segments_.num_theta,
-                    segment_theta);
-#endif
+    this->create_segments("muon_chambers",
+                          radius.sc_solenoid,
+                          radius.muon_chambers,
+                          muon_chambers_def,
+                          muon_chambers_lv,
+                          materials_.muon_chambers);
 
     return world_pv;
 }
@@ -467,7 +360,7 @@ void SegmentedSimpleCmsDetector::set_sd()
 
 //---------------------------------------------------------------------------//
 /*!
- * TODO
+ * Generate segments in r, theta, and z for a given cylinder.
  */
 void SegmentedSimpleCmsDetector::create_segments(
     std::string name,
@@ -509,7 +402,7 @@ void SegmentedSimpleCmsDetector::create_segments(
                     segment_r_lv,
                     segment_theta_lv,
                     EAxis::kRho,
-                    (G4int)num_segments_.num_r,
+                    num_segments_.num_r,
                     0);
 
     std::string name_theta_pv = name_theta + "_pv";
@@ -540,6 +433,6 @@ void SegmentedSimpleCmsDetector::create_segments(
                      si_tracker_segment_z_lv,
                      segment_r_lv,
                      EAxis::kZAxis,
-                     (G4int)num_segments_.num_z,
+                     num_segments_.num_z,
                      0);
 }

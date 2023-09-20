@@ -30,9 +30,9 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
 
     struct SegmentDefinition
     {
-        std::size_t num_theta;
-        std::size_t num_r;
-        std::size_t num_z;
+        int num_theta;
+        int num_r;
+        int num_z;
     };
 
     // Construct with geometry type
@@ -40,6 +40,7 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
 
     // Construct geometry
     G4VPhysicalVolume* Construct() final;
+
     // Set up sensitive detectors and magnetic field
     void ConstructSDandField() final;
 
