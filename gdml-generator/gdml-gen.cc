@@ -21,7 +21,9 @@
 
 #include <G4GDMLParser.hh>
 #include <G4UImanager.hh>
+
 #include "BoxDetector.hh"
+#include "SegmentedSimpleCmsDetector.hh"
 #include "SimpleCMSDetector.hh"
 #include "TestEm3Detector.hh"
 #include "core/PhysicsList.hh"
@@ -29,19 +31,20 @@
 enum class GeometryID
 {
     box,
-    simple_cms,             //!< Simple materials
-    simple_cms_composite,   //!< Composite materials
-    testem3,                //!< Simple materials
-    testem3_composite,      //!< Composite materials
-    testem3_flat,           //!< Simple materials, flat (for ORANGE)
-    testem3_composite_flat, //!< Composite materials flat (for ORANGE)
+    simple_cms,  //!< Simple materials
+    simple_cms_composite,  //!< Composite materials
+    segmented_simple_cms,  //!< Segmented Simple CMS
+    testem3,  //!< Simple materials
+    testem3_composite,  //!< Composite materials
+    testem3_flat,  //!< Simple materials, flat (for ORANGE)
+    testem3_composite_flat,  //!< Composite materials flat (for ORANGE)
 };
 
 //---------------------------------------------------------------------------//
 /*!
  * Help message.
  */
-void print_help(const char* argv)
+void print_help(char const* argv)
 {
     std::cout << "Usage:" << std::endl;
     std::cout << argv
@@ -52,10 +55,11 @@ void print_help(const char* argv)
     std::cout << "0: Box" << std::endl;
     std::cout << "1: Simple CMS - simple materials" << std::endl;
     std::cout << "2: Simple CMS - composite materials" << std::endl;
-    std::cout << "3: TestEm3 - simple materials" << std::endl;
-    std::cout << "4: TestEm3 - composite materials" << std::endl;
-    std::cout << "5: TestEm3 flat - simple materials, for ORANGE" << std::endl;
-    std::cout << "6: TestEm3 flat - composite materials, for ORANGE"
+    std::cout << "3: Segmented Simple CMS - composite materials" << std::endl;
+    std::cout << "4: TestEm3 - simple materials" << std::endl;
+    std::cout << "5: TestEm3 - composite materials" << std::endl;
+    std::cout << "6: TestEm3 flat - simple materials, for ORANGE" << std::endl;
+    std::cout << "7: TestEm3 flat - composite materials, for ORANGE"
               << std::endl;
 }
 
@@ -75,7 +79,7 @@ void export_gdml(std::string const& gdml_filename)
                      ->GetNavigatorForTracking()
                      ->GetWorldVolume()
                      ->GetLogicalVolume(),
-                 true); // bool appends ptr address to name
+                 true);  // bool appends ptr address to name
 }
 
 //---------------------------------------------------------------------------//
@@ -104,10 +108,11 @@ int main(int argc, char* argv[])
 #endif
 
     // Load input parameters
-    const auto   geometry_id = static_cast<GeometryID>(std::stoi(argv[1]));
-    const double range_cuts  = (argc == 3) ? std::stod(argv[2]) : 0.7;
+    auto const geometry_id = static_cast<GeometryID>(std::stoi(argv[1]));
+    double const range_cuts = (argc == 3) ? std::stod(argv[2]) : 0.7;
 
-    using CMSType        = SimpleCMSDetector::MaterialType;
+    using CMSType = SimpleCMSDetector::MaterialType;
+    using SCMSType = SegmentedSimpleCmsDetector::MaterialType;
     using TestEm3MatType = TestEm3Detector::MaterialType;
     using TestEm3GeoType = TestEm3Detector::GeometryType;
 
@@ -128,6 +133,15 @@ int main(int argc, char* argv[])
             run_manager->SetUserInitialization(
                 new SimpleCMSDetector(CMSType::composite));
             gdml_filename = "composite-simple-cms.gdml";
+            break;
+        case GeometryID::segmented_simple_cms:
+            SegmentedSimpleCmsDetector::SegmentDefinition def;
+            def.num_r = 2;
+            def.num_theta = 20;
+            def.num_z = 1;
+            run_manager->SetUserInitialization(
+                new SegmentedSimpleCmsDetector(SCMSType::composite, def));
+            gdml_filename = "composite-segmented-simple-cms.gdml";
             break;
         case GeometryID::testem3:
             run_manager->SetUserInitialization(new TestEm3Detector(
