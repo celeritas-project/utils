@@ -16,6 +16,7 @@
 #include <G4PVReplica.hh>
 #include <G4SDManager.hh>
 #include <G4VisAttributes.hh>
+#include <stdlib.h>
 
 #include "core/SensitiveDetector.hh"
 
@@ -27,6 +28,14 @@ SegmentedSimpleCmsDetector::SegmentedSimpleCmsDetector(
     MaterialType type, SegmentDefinition segments)
     : geometry_type_(type), num_segments_(segments)
 {
+    if (num_segments_.num_r < 1 || num_segments_.num_theta < 1
+        || num_segments_.num_z < 1)
+    {
+        std::cout << "Number of segments must be at least 1 in every axis"
+                  << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     materials_ = this->build_materials();
 }
 
