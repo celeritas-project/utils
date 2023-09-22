@@ -28,7 +28,7 @@ set(core_src
 
 set(geo_src
   ${geo_dir}/BoxDetector.cc
-  ${geo_dir}/SimpleCMSDetector.cc
+  ${geo_dir}/SimpleCmsDetector.cc
   ${geo_dir}/SegmentedSimpleCmsDetector.cc
   ${geo_dir}/TestEm3Detector.cc
 )

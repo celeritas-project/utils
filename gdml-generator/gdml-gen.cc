@@ -25,7 +25,7 @@
 
 #include "BoxDetector.hh"
 #include "SegmentedSimpleCmsDetector.hh"
-#include "SimpleCMSDetector.hh"
+#include "SimpleCmsDetector.hh"
 #include "TestEm3Detector.hh"
 #include "core/PhysicsList.hh"
 
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
     double const range_cuts = 0.7;
     // double const range_cuts = (argc == 3) ? std::stod(argv[2]) : 0.7;
 
-    using CMSType = SimpleCMSDetector::MaterialType;
+    using CMSType = SimpleCmsDetector::MaterialType;
     using SCMSType = SegmentedSimpleCmsDetector::MaterialType;
     using TestEm3MatType = TestEm3Detector::MaterialType;
     using TestEm3GeoType = TestEm3Detector::GeometryType;
@@ -162,13 +162,13 @@ int main(int argc, char* argv[])
 
         case GeometryID::simple_cms:
             run_manager->SetUserInitialization(
-                new SimpleCMSDetector(CMSType::simple));
+                new SimpleCmsDetector(CMSType::simple));
             gdml_filename = "simple-cms.gdml";
             break;
 
         case GeometryID::simple_cms_composite:
             run_manager->SetUserInitialization(
-                new SimpleCMSDetector(CMSType::composite));
+                new SimpleCmsDetector(CMSType::composite));
             gdml_filename = "composite-simple-cms.gdml";
             break;
 

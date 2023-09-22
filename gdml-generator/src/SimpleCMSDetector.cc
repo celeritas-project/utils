@@ -3,9 +3,9 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file SimpleCMSDetector.cc
+//! \file SimpleCmsDetector.cc
 //---------------------------------------------------------------------------//
-#include "SimpleCMSDetector.hh"
+#include "SimpleCmsDetector.hh"
 
 #include <G4Box.hh>
 #include <G4Colour.hh>
@@ -22,7 +22,7 @@
 /*!
  * Construct with geometry type enum.
  */
-SimpleCMSDetector::SimpleCMSDetector(MaterialType type) : geometry_type_(type)
+SimpleCmsDetector::SimpleCmsDetector(MaterialType type) : geometry_type_(type)
 {
 }
 
@@ -30,7 +30,7 @@ SimpleCMSDetector::SimpleCMSDetector(MaterialType type) : geometry_type_(type)
 /*!
  * Mandatory Construct function.
  */
-G4VPhysicalVolume* SimpleCMSDetector::Construct()
+G4VPhysicalVolume* SimpleCmsDetector::Construct()
 {
     return this->simple_cms();
 }
@@ -39,7 +39,7 @@ G4VPhysicalVolume* SimpleCMSDetector::Construct()
 /*!
  * Set sensitive detectors and (TODO) magnetic field.
  */
-void SimpleCMSDetector::ConstructSDandField()
+void SimpleCmsDetector::ConstructSDandField()
 {
     this->set_sd();
 
@@ -54,7 +54,7 @@ void SimpleCMSDetector::ConstructSDandField()
 /*!
  * Define list of materials.
  */
-SimpleCMSDetector::MaterialList SimpleCMSDetector::build_materials()
+SimpleCmsDetector::MaterialList SimpleCmsDetector::build_materials()
 {
     MaterialList materials;
     G4NistManager* nist = G4NistManager::Instance();
@@ -147,7 +147,7 @@ SimpleCMSDetector::MaterialList SimpleCMSDetector::build_materials()
  * | muon chambers                | N/A        |
  *
  */
-G4VPhysicalVolume* SimpleCMSDetector::simple_cms()
+G4VPhysicalVolume* SimpleCmsDetector::simple_cms()
 {
     // Set up material list
     MaterialList materials = this->build_materials();
@@ -299,7 +299,7 @@ G4VPhysicalVolume* SimpleCMSDetector::simple_cms()
  * The two first inner cylinders, which represent the silicon tracker and the
  * EM calorimeter, are used as sensitive scoring regions.
  */
-void SimpleCMSDetector::set_sd()
+void SimpleCmsDetector::set_sd()
 {
     // List of sensitive detectors
     auto si_tracker_sd = new SensitiveDetector("si_tracker_sd");
