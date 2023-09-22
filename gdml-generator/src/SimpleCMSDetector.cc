@@ -7,14 +7,14 @@
 //---------------------------------------------------------------------------//
 #include "SimpleCMSDetector.hh"
 
-#include <G4NistManager.hh>
 #include <G4Box.hh>
-#include <G4Tubs.hh>
-#include <G4LogicalVolume.hh>
-#include <G4PVPlacement.hh>
-#include <G4VisAttributes.hh>
 #include <G4Colour.hh>
+#include <G4LogicalVolume.hh>
+#include <G4NistManager.hh>
+#include <G4PVPlacement.hh>
 #include <G4SDManager.hh>
+#include <G4Tubs.hh>
+#include <G4VisAttributes.hh>
 
 #include "core/SensitiveDetector.hh"
 
@@ -56,20 +56,20 @@ void SimpleCMSDetector::ConstructSDandField()
  */
 SimpleCMSDetector::MaterialList SimpleCMSDetector::build_materials()
 {
-    MaterialList   materials;
+    MaterialList materials;
     G4NistManager* nist = G4NistManager::Instance();
 
     switch (geometry_type_)
     {
         case MaterialType::simple:
             // Load materials
-            materials.world       = nist->FindOrBuildMaterial("G4_Galactic");
+            materials.world = nist->FindOrBuildMaterial("G4_Galactic");
             materials.vacuum_tube = nist->FindOrBuildMaterial("G4_Galactic");
-            materials.si_tracker  = nist->FindOrBuildMaterial("G4_Si");
-            materials.em_calorimeter  = nist->FindOrBuildMaterial("G4_Pb");
+            materials.si_tracker = nist->FindOrBuildMaterial("G4_Si");
+            materials.em_calorimeter = nist->FindOrBuildMaterial("G4_Pb");
             materials.had_calorimeter = nist->FindOrBuildMaterial("G4_C");
-            materials.sc_solenoid     = nist->FindOrBuildMaterial("G4_Ti");
-            materials.muon_chambers   = nist->FindOrBuildMaterial("G4_Fe");
+            materials.sc_solenoid = nist->FindOrBuildMaterial("G4_Ti");
+            materials.muon_chambers = nist->FindOrBuildMaterial("G4_Fe");
 
             // Update names
             materials.world->SetName("vacuum");
@@ -83,15 +83,15 @@ SimpleCMSDetector::MaterialList SimpleCMSDetector::build_materials()
 
         case MaterialType::composite:
             // Load materials
-            materials.world       = nist->FindOrBuildMaterial("G4_Galactic");
+            materials.world = nist->FindOrBuildMaterial("G4_Galactic");
             materials.vacuum_tube = nist->FindOrBuildMaterial("G4_Galactic");
             materials.si_tracker
                 = nist->FindOrBuildMaterial("G4_SILICON_DIOXIDE");
             materials.em_calorimeter
                 = nist->FindOrBuildMaterial("G4_LEAD_OXIDE");
             materials.had_calorimeter = nist->FindOrBuildMaterial("G4_C");
-            materials.sc_solenoid     = nist->FindOrBuildMaterial("G4_Ti");
-            materials.muon_chambers   = nist->FindOrBuildMaterial("G4_Fe");
+            materials.sc_solenoid = nist->FindOrBuildMaterial("G4_Ti");
+            materials.muon_chambers = nist->FindOrBuildMaterial("G4_Fe");
 
             // Update names
             materials.world->SetName("vacuum");
@@ -114,7 +114,7 @@ SimpleCMSDetector::MaterialList SimpleCMSDetector::build_materials()
 /*!
  * Programmatic geometry definition: Single material CMS mock up.
  *
- * This is a set of single-element concentric cylinders that acts as a
+ * This is a set of single-material concentric cylinders that acts as a
  * cylindrical cow in a vacuum version of CMS.
  *
  * - The World volume is a box, and its dimensions are expressed in cartesian
@@ -153,9 +153,9 @@ G4VPhysicalVolume* SimpleCMSDetector::simple_cms()
     MaterialList materials = this->build_materials();
 
     // Size of World volume
-    const double world_size = 20 * m;
+    double const world_size = 20 * m;
     // Half length of all concentric cylinders (z-axis)
-    const double half_length = 7 * m;
+    double const half_length = 7 * m;
 
     // List of solids
     G4Box* world_def
@@ -163,11 +163,11 @@ G4VPhysicalVolume* SimpleCMSDetector::simple_cms()
 
     G4Tubs* vacuum_tube_def
         = new G4Tubs("lhc_vacuum_tube",
-                     0,                                // Inner radius
-                     30 * cm - volume_gaps_.tolerance, // Outer radius
-                     half_length,                      // Half-length z
-                     0 * deg,                          // Start angle
-                     360 * deg);                       // Spanning angle
+                     0,  // Inner radius
+                     30 * cm - volume_gaps_.tolerance,  // Outer radius
+                     half_length,  // Half-length z
+                     0 * deg,  // Start angle
+                     360 * deg);  // Spanning angle
 
     G4Tubs* si_tracker_def = new G4Tubs("silicon_tracker",
                                         30 * cm,
@@ -205,36 +205,36 @@ G4VPhysicalVolume* SimpleCMSDetector::simple_cms()
                                                 360 * deg);
 
     // List of logical volumes
-    const auto world_lv
+    auto const world_lv
         = new G4LogicalVolume(world_def, materials.world, "world");
 
-    const auto vacuum_tube_lv = new G4LogicalVolume(
+    auto const vacuum_tube_lv = new G4LogicalVolume(
         vacuum_tube_def, materials.vacuum_tube, "vacuum_tube");
 
-    const auto si_tracker_lv = new G4LogicalVolume(
+    auto const si_tracker_lv = new G4LogicalVolume(
         si_tracker_def, materials.si_tracker, "si_tracker");
 
-    const auto em_calorimeter_lv = new G4LogicalVolume(
+    auto const em_calorimeter_lv = new G4LogicalVolume(
         em_calorimeter_def, materials.em_calorimeter, "em_calorimeter");
 
-    const auto had_calorimeter_lv = new G4LogicalVolume(
+    auto const had_calorimeter_lv = new G4LogicalVolume(
         had_calorimeter_def, materials.had_calorimeter, "had_calorimeter");
 
-    const auto sc_solenoid_lv = new G4LogicalVolume(
+    auto const sc_solenoid_lv = new G4LogicalVolume(
         sc_solenoid_def, materials.sc_solenoid, "sc_solenoid");
 
-    const auto iron_muon_chambers_lv = new G4LogicalVolume(
+    auto const iron_muon_chambers_lv = new G4LogicalVolume(
         iron_muon_chambers_def, materials.muon_chambers, "fe_muon_chambers");
 
     // List of physical volumes
-    const auto world_pv = new G4PVPlacement(0,               // Rotation matrix
-                                            G4ThreeVector(), // Position
-                                            world_lv,        // Current LV
-                                            "world_pv",      // Name
-                                            nullptr,         // Mother LV
-                                            false,           // Bool operation
-                                            0,               // Copy number
-                                            false);          // Overlap check
+    auto const world_pv = new G4PVPlacement(0,  // Rotation matrix
+                                            G4ThreeVector(),  // Position
+                                            world_lv,  // Current LV
+                                            "world_pv",  // Name
+                                            nullptr,  // Mother LV
+                                            false,  // Bool operation
+                                            0,  // Copy number
+                                            false);  // Overlap check
 
     new G4PVPlacement(0,
                       G4ThreeVector(),
@@ -302,7 +302,7 @@ G4VPhysicalVolume* SimpleCMSDetector::simple_cms()
 void SimpleCMSDetector::set_sd()
 {
     // List of sensitive detectors
-    auto si_tracker_sd     = new SensitiveDetector("si_tracker_sd");
+    auto si_tracker_sd = new SensitiveDetector("si_tracker_sd");
     auto em_calorimeter_sd = new SensitiveDetector("em_calorimeter_sd");
 
     // Add SD to manager

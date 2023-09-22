@@ -57,6 +57,20 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
         G4Material* muon_chambers;
     } materials_;
 
+    // Size of World volume
+    double const world_size_ = 20 * m;
+
+    // Hardcoded cylinder sizes
+    struct CylinderRadius
+    {
+        double vacuum_tube{30 * cm};
+        double si_tracker{125 * cm};
+        double em_calo{175 * cm};
+        double had_calo{275 * cm};
+        double sc_solenoid{375 * cm};
+        double muon_chambers{700 * cm};
+    } const radius_;
+
     // Cylinder half length
     double const half_length_{7 * m};
 
@@ -66,8 +80,11 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
     // Number of segments
     SegmentDefinition num_segments_;
 
+    // Use flat geometry construction
+    bool const flat_segmentation{true};
+
   private:
-    // Segmented simple CMS
+    // Segmented simple CMS using replicas and divisions
     G4VPhysicalVolume* segmented_simple_cms();
 
     // Set sensitive detectors
@@ -76,7 +93,7 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
     // Build material list based on MaterialType
     MaterialList build_materials();
 
-    // Construct segments for each main cylinder
+    // Construct segments for each main cylinder using replicas and divisions
     void create_segments(std::string name,
                          double inner_r,
                          double outer_r,
@@ -84,8 +101,10 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
                          G4LogicalVolume* full_cylinder_lv,
                          G4Material* cyl_material);
 
-    // Build segments manually by just placing volumes
+    // Segmented simple CMS with manually placed volumes
     G4VPhysicalVolume* flat_segmented_simple_cms();
+
+    // Construct a segmented cylinder by manually placing smaller ones
     void flat_segmented_cylinder(std::string name,
                                  double inner_r,
                                  double outer_r,

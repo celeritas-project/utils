@@ -45,8 +45,7 @@ SegmentedSimpleCmsDetector::SegmentedSimpleCmsDetector(
  */
 G4VPhysicalVolume* SegmentedSimpleCmsDetector::Construct()
 {
-    // return this->segmented_simple_cms();
-    return this->flat_segmented_simple_cms();
+    return this->segmented_simple_cms();
 }
 
 //---------------------------------------------------------------------------//
@@ -126,70 +125,40 @@ SegmentedSimpleCmsDetector::build_materials()
 
 //---------------------------------------------------------------------------//
 /*!
- * Programmatic geometry definition: Segmented simple CMS mock up.
+ * Programmatic geometry definition: Segmented simple CMS.
  *
- * This is a set of single-element concentric cylinders that can be split
- * multiple times in each direction, to generate a large numbers of volumes.
- *
- * - The World volume is a box, and its dimensions are expressed in cartesian
- * coordinates [x. y, z].
- * - **All** other volumes are concentric cylinders, and their dimensions are
- * expressed as [inner radius, outer radius, length]
- *
- * | Volume                       | Composition      | Dimensions [cm]    |
- * | ---------------------------- | ---------------- | ------------------ |
- * | world                        | H                | [1000, 1000, 2000] |
- * | vacuum tube                  | H                | [0, 30, 1400]      |
- * | silicon tracker              | Si or SiO2       | [30, 125, 1400]    |
- * | electromagnetic calorimeter  | Pb or Pb3O4      | [125, 175, 1400]   |
- * | hadron calorimeter           | C                | [175, 275, 1400]   |
- * | superconducting solenoid     | Ti               | [275, 375, 1400]   |
- * | muon chambers                | Fe               | [375, 700, 1400]   |
- *
- * Table shows the full cylinder values. Each of those cylinders can be
- * segmented in every direction. The sum of all segments will add up to the
- * above values.
+ * This is a set of single-material concentric cylinders that can be split
+ * multiple times in each direction to generate a large numbers of volumes.
  *
  * E.g.: If the silicon tracker is segmented in 2 in the radial axis, it will
- * become si_tracker_1 (r = [30, 77.5]) and si_tracker_2 (r = [77.5, 125]).
+ * be split into si_tracker_1 (with r = [30, 77.5] cm) and si_tracker_2 (with
+ * r = [77.5, 125] cm).
+ *
+ * The final size of each material cylinder is still identical to the
+ * \c SimpleCmsDetector class.
  */
 G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
 {
-    // Size of World volume
-    double const world_size = 20 * m;
-
-    struct CylinderRadius
-    {
-        double vacuum_tube{30 * cm};
-        double si_tracker{125 * cm};
-        double em_calo{175 * cm};
-        double had_calo{275 * cm};
-        double sc_solenoid{375 * cm};
-        double muon_chambers{700 * cm};
-    } const radius;
-
     // World volume
-    G4Box* world_def
-        = new G4Box("world_def", world_size / 2, world_size / 2, world_size);
+    G4Box* world_def = new G4Box(
+        "world_def", world_size_ / 2, world_size_ / 2, world_size_);
 
     auto const world_lv
-        = new G4LogicalVolume(world_def, materials_.world, "world");
+        = new G4LogicalVolume(world_def, materials_.world, "world_lv");
 
     auto const world_pv = new G4PVPlacement(0,  // Rotation matrix
                                             G4ThreeVector(),  // Position
                                             world_lv,  // Current LV
-                                            "world_pv",  // Name
+                                            "world",  // Name
                                             nullptr,  // Mother LV
                                             false,  // Bool operation
                                             0,  // Copy number
                                             false);  // Overlap check
 
-    //// Set up mother tubes needed for the material segments
-
     // Vacuum tube
     G4Tubs* vacuum_tube_def = new G4Tubs("vacuum_tube_def",
                                          0,  // Inner radius
-                                         radius.vacuum_tube,  // Outer radius
+                                         radius_.vacuum_tube,  // Outer radius
                                          half_length_,  // Half-length z
                                          0 * deg,  // Start angle
                                          360 * deg);  // Spanning angle
@@ -206,140 +175,179 @@ G4VPhysicalVolume* SegmentedSimpleCmsDetector::segmented_simple_cms()
                       0,
                       false);
 
-    // Si tracker
-    G4Tubs* si_tracker_def = new G4Tubs("si_tracker_def",
-                                        radius.vacuum_tube,
-                                        radius.si_tracker,
-                                        half_length_,
-                                        0 * deg,
-                                        360 * deg);
+    if (!flat_segmentation)
+    {
+        // Use replicas and divisions to generate a hierarchical geometry
 
-    auto const si_tracker_lv
-        = new G4LogicalVolume(si_tracker_def, materials_.world, "si_tracker");
-
-    auto si_tracker_pv = new G4PVPlacement(0,
-                                           G4ThreeVector(),
-                                           si_tracker_lv,
-                                           "si_tracker_pv",
-                                           world_lv,
-                                           false,
-                                           0,
-                                           false);
-    // EM calorimeter
-    G4Tubs* em_calorimeter_def = new G4Tubs("em_calorimeter_def",
-                                            radius.si_tracker,
-                                            radius.em_calo,
+        // Si tracker
+        G4Tubs* si_tracker_def = new G4Tubs("si_tracker_def",
+                                            radius_.vacuum_tube,
+                                            radius_.si_tracker,
                                             half_length_,
                                             0 * deg,
                                             360 * deg);
 
-    auto const em_calorimeter_lv = new G4LogicalVolume(
-        em_calorimeter_def, materials_.world, "em_calorimeter_lv");
+        auto const si_tracker_lv = new G4LogicalVolume(
+            si_tracker_def, materials_.world, "si_tracker");
 
-    new G4PVPlacement(0,
-                      G4ThreeVector(),
-                      em_calorimeter_lv,
-                      "em_calorimeter_pv",
-                      world_lv,
-                      false,
-                      0,
-                      false);
+        auto si_tracker_pv = new G4PVPlacement(0,
+                                               G4ThreeVector(),
+                                               si_tracker_lv,
+                                               "si_tracker_pv",
+                                               world_lv,
+                                               false,
+                                               0,
+                                               false);
+        // EM calorimeter
+        G4Tubs* em_calorimeter_def = new G4Tubs("em_calorimeter_def",
+                                                radius_.si_tracker,
+                                                radius_.em_calo,
+                                                half_length_,
+                                                0 * deg,
+                                                360 * deg);
 
-    // Hadron calorimeter
-    G4Tubs* had_calorimeter_def = new G4Tubs("had_calorimeter_def",
-                                             radius.em_calo,
-                                             radius.had_calo,
+        auto const em_calorimeter_lv = new G4LogicalVolume(
+            em_calorimeter_def, materials_.world, "em_calorimeter_lv");
+
+        new G4PVPlacement(0,
+                          G4ThreeVector(),
+                          em_calorimeter_lv,
+                          "em_calorimeter_pv",
+                          world_lv,
+                          false,
+                          0,
+                          false);
+
+        // Hadron calorimeter
+        G4Tubs* had_calorimeter_def = new G4Tubs("had_calorimeter_def",
+                                                 radius_.em_calo,
+                                                 radius_.had_calo,
+                                                 half_length_,
+                                                 0 * deg,
+                                                 360 * deg);
+
+        auto const had_calorimeter_lv = new G4LogicalVolume(
+            had_calorimeter_def, materials_.world, "had_calorimeter_lv");
+
+        new G4PVPlacement(0,
+                          G4ThreeVector(),
+                          had_calorimeter_lv,
+                          "had_calorimeter_pv",
+                          world_lv,
+                          false,
+                          0,
+                          false);
+
+        // Superconducting solenoid
+        G4Tubs* sc_solenoid_def = new G4Tubs("sc_solenoid_def",
+                                             radius_.had_calo,
+                                             radius_.sc_solenoid,
                                              half_length_,
                                              0 * deg,
                                              360 * deg);
 
-    auto const had_calorimeter_lv = new G4LogicalVolume(
-        had_calorimeter_def, materials_.world, "had_calorimeter_lv");
+        auto const sc_solenoid_lv = new G4LogicalVolume(
+            sc_solenoid_def, materials_.world, "sc_solenoid_lv");
 
-    new G4PVPlacement(0,
-                      G4ThreeVector(),
-                      had_calorimeter_lv,
-                      "had_calorimeter_pv",
-                      world_lv,
-                      false,
-                      0,
-                      false);
-
-    // Superconducting solenoid
-    G4Tubs* sc_solenoid_def = new G4Tubs("sc_solenoid_def",
-                                         radius.had_calo,
-                                         radius.sc_solenoid,
-                                         half_length_,
-                                         0 * deg,
-                                         360 * deg);
-
-    auto const sc_solenoid_lv = new G4LogicalVolume(
-        sc_solenoid_def, materials_.world, "sc_solenoid_lv");
-
-    new G4PVPlacement(0,
-                      G4ThreeVector(),
-                      sc_solenoid_lv,
-                      "sc_solenoid_pv",
-                      world_lv,
-                      false,
-                      0,
-                      false);
-
-    // Muon chambers
-    G4Tubs* muon_chambers_def = new G4Tubs("muon_chambers_def",
-                                           radius.sc_solenoid,
-                                           radius.muon_chambers,
-                                           half_length_,
-                                           0 * deg,
-                                           360 * deg);
-
-    auto const muon_chambers_lv = new G4LogicalVolume(
-        muon_chambers_def, materials_.world, "muon_chambers_lv");
-
-    new G4PVPlacement(0,
-                      G4ThreeVector(),
-                      muon_chambers_lv,
-                      "muon_chambers_pv",
-                      world_lv,
-                      false,
-                      0,
-                      false);
-
-    // Add segmented elements
-    this->create_segments("si_tracker",
-                          radius.vacuum_tube,
-                          radius.si_tracker,
-                          si_tracker_def,
-                          si_tracker_lv,
-                          materials_.si_tracker);
-
-    this->create_segments("em_calorimeter",
-                          radius.si_tracker,
-                          radius.em_calo,
-                          em_calorimeter_def,
-                          em_calorimeter_lv,
-                          materials_.em_calorimeter);
-
-    this->create_segments("had_calorimeter",
-                          radius.em_calo,
-                          radius.had_calo,
-                          had_calorimeter_def,
-                          had_calorimeter_lv,
-                          materials_.had_calorimeter);
-
-    this->create_segments("sc_solenoid",
-                          radius.had_calo,
-                          radius.sc_solenoid,
-                          sc_solenoid_def,
+        new G4PVPlacement(0,
+                          G4ThreeVector(),
                           sc_solenoid_lv,
-                          materials_.sc_solenoid);
+                          "sc_solenoid_pv",
+                          world_lv,
+                          false,
+                          0,
+                          false);
 
-    this->create_segments("muon_chambers",
-                          radius.sc_solenoid,
-                          radius.muon_chambers,
-                          muon_chambers_def,
+        // Muon chambers
+        G4Tubs* muon_chambers_def = new G4Tubs("muon_chambers_def",
+                                               radius_.sc_solenoid,
+                                               radius_.muon_chambers,
+                                               half_length_,
+                                               0 * deg,
+                                               360 * deg);
+
+        auto const muon_chambers_lv = new G4LogicalVolume(
+            muon_chambers_def, materials_.world, "muon_chambers_lv");
+
+        new G4PVPlacement(0,
+                          G4ThreeVector(),
                           muon_chambers_lv,
-                          materials_.muon_chambers);
+                          "muon_chambers_pv",
+                          world_lv,
+                          false,
+                          0,
+                          false);
+
+        // Add segmented elements
+        this->create_segments("si_tracker",
+                              radius_.vacuum_tube,
+                              radius_.si_tracker,
+                              si_tracker_def,
+                              si_tracker_lv,
+                              materials_.si_tracker);
+
+        this->create_segments("em_calorimeter",
+                              radius_.si_tracker,
+                              radius_.em_calo,
+                              em_calorimeter_def,
+                              em_calorimeter_lv,
+                              materials_.em_calorimeter);
+
+        this->create_segments("had_calorimeter",
+                              radius_.em_calo,
+                              radius_.had_calo,
+                              had_calorimeter_def,
+                              had_calorimeter_lv,
+                              materials_.had_calorimeter);
+
+        this->create_segments("sc_solenoid",
+                              radius_.had_calo,
+                              radius_.sc_solenoid,
+                              sc_solenoid_def,
+                              sc_solenoid_lv,
+                              materials_.sc_solenoid);
+
+        this->create_segments("muon_chambers",
+                              radius_.sc_solenoid,
+                              radius_.muon_chambers,
+                              muon_chambers_def,
+                              muon_chambers_lv,
+                              materials_.muon_chambers);
+    }
+
+    else
+    {
+        // Manually place every segment directly into the world volume
+        this->flat_segmented_cylinder("si_tracker",
+                                      radius_.vacuum_tube,
+                                      radius_.si_tracker,
+                                      materials_.si_tracker,
+                                      world_pv);
+
+        this->flat_segmented_cylinder("em_calorimeter",
+                                      radius_.si_tracker,
+                                      radius_.em_calo,
+                                      materials_.em_calorimeter,
+                                      world_pv);
+
+        this->flat_segmented_cylinder("had_calorimeter",
+                                      radius_.em_calo,
+                                      radius_.had_calo,
+                                      materials_.had_calorimeter,
+                                      world_pv);
+
+        this->flat_segmented_cylinder("sc_solenoid",
+                                      radius_.had_calo,
+                                      radius_.sc_solenoid,
+                                      materials_.sc_solenoid,
+                                      world_pv);
+
+        this->flat_segmented_cylinder("muon_chambers",
+                                      radius_.sc_solenoid,
+                                      radius_.muon_chambers,
+                                      materials_.muon_chambers,
+                                      world_pv);
+    }
 
     return world_pv;
 }
@@ -355,7 +363,10 @@ void SegmentedSimpleCmsDetector::set_sd()
 
 //---------------------------------------------------------------------------//
 /*!
- * Generate segments in r, theta, and z for a given cylinder.
+ * Generate segments in r, theta, and z for a given cylinder using replicas and
+ * divisions.
+ *
+ * \note Not compatible with VecGeom.
  */
 void SegmentedSimpleCmsDetector::create_segments(
     std::string name,
@@ -434,96 +445,11 @@ void SegmentedSimpleCmsDetector::create_segments(
 
 //---------------------------------------------------------------------------//
 /*!
- * Generate flat geometry, by manually placing volume sections.
- */
-G4VPhysicalVolume* SegmentedSimpleCmsDetector::flat_segmented_simple_cms()
-{
-    // Size of World volume
-    double const world_size = 20 * m;
-
-    struct CylinderRadius
-    {
-        double vacuum_tube{30 * cm};
-        double si_tracker{125 * cm};
-        double em_calo{175 * cm};
-        double had_calo{275 * cm};
-        double sc_solenoid{375 * cm};
-        double muon_chambers{700 * cm};
-    } const radius;
-
-    // World volume
-    G4Box* world_def
-        = new G4Box("world_def", world_size / 2, world_size / 2, world_size);
-
-    auto const world_lv
-        = new G4LogicalVolume(world_def, materials_.world, "world_lv");
-
-    auto world_pv = new G4PVPlacement(0,  // Rotation matrix
-                                      G4ThreeVector(),  // Position
-                                      world_lv,  // Current LV
-                                      "world",  // Name
-                                      nullptr,  // Mother LV
-                                      false,  // Bool operation
-                                      0,  // Copy number
-                                      false);  // Overlap check
-
-    // Vacuum tube
-    G4Tubs* vacuum_tube_def = new G4Tubs("vacuum_tube_def",
-                                         0,  // Inner radius
-                                         radius.vacuum_tube,  // Outer radius
-                                         half_length_,  // Half-length z
-                                         0 * deg,  // Start angle
-                                         360 * deg);  // Spanning angle
-
-    auto const vacuum_tube_lv = new G4LogicalVolume(
-        vacuum_tube_def, materials_.vacuum_tube, "vacuum_tube_lv");
-
-    new G4PVPlacement(0,
-                      G4ThreeVector(),  // Spans -z/2 to +z/2
-                      vacuum_tube_lv,
-                      "vacuum_tube_pv",
-                      world_lv,
-                      false,
-                      0,
-                      false);
-
-    // Add cylinders
-    this->flat_segmented_cylinder("si_tracker",
-                                  radius.vacuum_tube,
-                                  radius.si_tracker,
-                                  materials_.si_tracker,
-                                  world_pv);
-
-    this->flat_segmented_cylinder("em_calorimeter",
-                                  radius.si_tracker,
-                                  radius.em_calo,
-                                  materials_.em_calorimeter,
-                                  world_pv);
-
-    this->flat_segmented_cylinder("had_calorimeter",
-                                  radius.em_calo,
-                                  radius.had_calo,
-                                  materials_.had_calorimeter,
-                                  world_pv);
-
-    this->flat_segmented_cylinder("sc_solenoid",
-                                  radius.had_calo,
-                                  radius.sc_solenoid,
-                                  materials_.sc_solenoid,
-                                  world_pv);
-
-    this->flat_segmented_cylinder("muon_chambers",
-                                  radius.sc_solenoid,
-                                  radius.muon_chambers,
-                                  materials_.muon_chambers,
-                                  world_pv);
-
-    return world_pv;
-}
-
-//---------------------------------------------------------------------------//
-/*!
- * Helper function to generate a flat segmented cylinder.
+ * Helper function to generate a flat segmented cylinder: this manually
+ * constructs individual G4Tubs as segments, and place them directly into the
+ * world volume.
+ *
+ * \note Compatible with VecGeom.
  */
 void SegmentedSimpleCmsDetector::flat_segmented_cylinder(
     std::string name,
