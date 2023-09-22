@@ -83,4 +83,12 @@ class SegmentedSimpleCmsDetector : public G4VUserDetectorConstruction
                          G4Tubs* full_culinder_def,
                          G4LogicalVolume* full_cylinder_lv,
                          G4Material* cyl_material);
+
+    // Build segments manually by just placing volumes
+    G4VPhysicalVolume* flat_segmented_simple_cms();
+    void flat_segmented_cylinder(std::string name,
+                                 double inner_r,
+                                 double outer_r,
+                                 G4Material* material,
+                                 G4VPhysicalVolume* world_pv);
 };
