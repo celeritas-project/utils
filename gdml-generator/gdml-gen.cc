@@ -132,6 +132,19 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    // Load input parameters
+    auto const geometry_id = static_cast<GeometryID>(std::stoi(argv[1]));
+    double const range_cuts = 0.7;
+    // double const range_cuts = (argc == 3) ? std::stod(argv[2]) : 0.7;
+
+    if (geometry_id != GeometryID::segmented_simple_cms
+        && geometry_id != GeometryID::segmented_simple_cms_composite
+        && argc != 2)
+    {
+        std::cout << "Wrong number of arguments" << std::endl;
+        return EXIT_FAILURE;
+    }
+
     // Create Run Manager
     std::unique_ptr<G4RunManager> run_manager;
 #if G4_V10
@@ -140,11 +153,6 @@ int main(int argc, char* argv[])
     run_manager.reset(
         G4RunManagerFactory::CreateRunManager(G4RunManagerType::Serial));
 #endif
-
-    // Load input parameters
-    auto const geometry_id = static_cast<GeometryID>(std::stoi(argv[1]));
-    double const range_cuts = 0.7;
-    // double const range_cuts = (argc == 3) ? std::stod(argv[2]) : 0.7;
 
     using CMSType = SimpleCmsDetector::MaterialType;
     using SCMSType = SegmentedSimpleCmsDetector::MaterialType;
