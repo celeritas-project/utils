@@ -19,7 +19,8 @@ find_package(Geant4 REQUIRED)
 #----------------------------------------------------------------------------#
 set(sources
   src/ActionInitialization.cc
-  src/OpticsDetector.cc
+  src/OpticalPhysics.cc
+  src/OpticalDetector.cc
   src/PrimaryGenerator.cc
 )
 

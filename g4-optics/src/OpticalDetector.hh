@@ -3,7 +3,7 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file src/OpticsDetector.hh
+//! \file src/OpticalDetector.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
@@ -15,11 +15,11 @@
 /*!
  * Construct detector geometry.
  */
-class OpticsDetector final : public G4VUserDetectorConstruction
+class OpticalDetector final : public G4VUserDetectorConstruction
 {
   public:
     // Construct and set up materials
-    OpticsDetector();
+    OpticalDetector();
 
     // Define programmatic geometry
     G4VPhysicalVolume* Construct() final;

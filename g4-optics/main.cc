@@ -6,12 +6,31 @@
 //! \file main.cc
 //---------------------------------------------------------------------------//
 #include <G4EmStandardPhysics.hh>
+#include <G4GDMLParser.hh>
 #include <G4RunManager.hh>
 #include <G4VModularPhysicsList.hh>
 
 #include "src/ActionInitialization.hh"
-#include "src/OpticsDetector.hh"
+#include "src/OpticalDetector.hh"
+#include "src/OpticalPhysics.hh"
 #include "src/PrimaryGenerator.hh"
+
+//---------------------------------------------------------------------------//
+//! HELPER function for exporting the geomtry as a GDML file.
+void export_gdml()
+{
+    G4GDMLParser parser;
+    parser.SetEnergyCutsExport(true);
+    parser.SetSDExport(true);
+    parser.SetOverlapCheck(true);
+    parser.SetOutputFileOverwrite(true);
+    parser.Write("geo-optics.gdml",
+                 G4TransportationManager::GetTransportationManager()
+                     ->GetNavigatorForTracking()
+                     ->GetWorldVolume()
+                     ->GetLogicalVolume(),
+                 false);  // bool appends ptr address to name
+}
 
 //---------------------------------------------------------------------------//
 /*!
@@ -31,14 +50,9 @@ int main(int argc, char* argv[])
     G4RunManager run_manager;
     run_manager.SetVerboseLevel(0);
 
-    // TODO: Set up correct physics list
-    std::unique_ptr<G4VModularPhysicsList> physics
-        = std::make_unique<G4VModularPhysicsList>();
-    physics->RegisterPhysics(new G4EmStandardPhysics(/* verbosity = */ 0));
-
     // Initialize physics, geometry, and actions
-    run_manager.SetUserInitialization(physics.release());
-    run_manager.SetUserInitialization(new OpticsDetector());
+    run_manager.SetUserInitialization(new OpticalPhysics());
+    run_manager.SetUserInitialization(new OpticalDetector());
     run_manager.SetUserInitialization(new ActionInitalization());
 
     // TODO: maybe set up visualization?
@@ -46,6 +60,12 @@ int main(int argc, char* argv[])
     // Initialize and run
     run_manager.Initialize();
     run_manager.BeamOn(1);
+
+    if (false)
+    {
+        // Generate gdml for testing
+        export_gdml();
+    }
 
     return EXIT_SUCCESS;
 }

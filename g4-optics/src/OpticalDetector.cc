@@ -3,9 +3,9 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file src/OpticsDetector.hh
+//! \file src/OpticalDetector.hh
 //---------------------------------------------------------------------------//
-#include "OpticsDetector.hh"
+#include "OpticalDetector.hh"
 
 #include <G4Box.hh>
 #include <G4LogicalVolume.hh>
@@ -17,7 +17,7 @@
 /*!
  * Construct and set up materials.
  */
-OpticsDetector::OpticsDetector() : G4VUserDetectorConstruction()
+OpticalDetector::OpticalDetector() : G4VUserDetectorConstruction()
 {
     auto const nist = G4NistManager::Instance();
     geo_mat_.world = nist->FindOrBuildMaterial("G4_Galactic");
@@ -29,7 +29,7 @@ OpticsDetector::OpticsDetector() : G4VUserDetectorConstruction()
  * Construct geometry: a vacuum world box with a smaller box with a material
  * with optical properties.
  */
-G4VPhysicalVolume* OpticsDetector::Construct()
+G4VPhysicalVolume* OpticalDetector::Construct()
 {
     // World
     auto world_def = new G4Box(
