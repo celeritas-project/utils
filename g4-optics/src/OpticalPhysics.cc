@@ -47,16 +47,16 @@ void OpticalPhysics::ConstructProcess()
     auto params = G4OpticalParameters::Instance();
 
     // Attenuate photon based on material properties; Used to calculate mfp
-    auto absorption_proc = std::make_unique<G4OpAbsorption>();
     if (params->GetProcessActivation("OpAbsorption"))
     {
+        auto absorption_proc = std::make_unique<G4OpAbsorption>();
         mgr->AddDiscreteProcess(absorption_proc.release());
     }
 
-    // Update velocity, polarization, direction when crossing boundaries
-    auto boundary_proc = std::make_unique<G4OpBoundaryProcess>();
+    // Update velocity, polarization, and direction when crossing boundaries
     if (params->GetProcessActivation("OpBoundary"))
     {
+        auto boundary_proc = std::make_unique<G4OpBoundaryProcess>();
         mgr->AddDiscreteProcess(boundary_proc.release());
     }
 }

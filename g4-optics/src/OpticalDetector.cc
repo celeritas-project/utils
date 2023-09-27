@@ -8,8 +8,11 @@
 #include "OpticalDetector.hh"
 
 #include <G4Box.hh>
+#include <G4LogicalBorderSurface.hh>
 #include <G4LogicalVolume.hh>
+#include <G4MaterialPropertyVector.hh>
 #include <G4NistManager.hh>
+#include <G4OpticalSurface.hh>
 #include <G4PVPlacement.hh>
 #include <G4VPhysicalVolume.hh>
 
@@ -57,7 +60,31 @@ G4VPhysicalVolume* OpticalDetector::Construct()
     auto box_pv = new G4PVPlacement(
         0, G4ThreeVector(), box_lv, "box_pv", world_lv, false, 0, false);
 
-    // TODO: Set up optical properties
+    //// Optical properties ////
+
+    // For reflection/refraction: need surface model, type, finish
+    auto optical_surface = new G4OpticalSurface("optical_surface");
+    optical_surface->SetModel(G4OpticalSurfaceModel::glisur);
+    optical_surface->SetType(G4SurfaceType::dielectric_metal);
+    optical_surface->SetFinish(G4OpticalSurfaceFinish::polished);
+
+    new G4LogicalBorderSurface(
+        "box_interface", world_pv, box_pv, optical_surface);
+
+    // Set up material properties for reflectivity
+    std::vector<double> energies, values;
+    energies.push_back(2 * eV);
+    energies.push_back(3.5 * eV);
+    values.push_back(1);
+    values.push_back(1);
+    auto mat_property = std::make_unique<G4MaterialPropertyVector>(
+        energies, values, /*spline = */ false);
+
+    // Set up material properties table
+    auto surface_properties = new G4MaterialPropertiesTable();
+    surface_properties->AddProperty(
+        "reflectivity", mat_property.release(), /* create new key = */ true);
+    optical_surface->SetMaterialPropertiesTable(surface_properties);
 
     return world_pv;
 }

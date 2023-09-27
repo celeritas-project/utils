@@ -8,7 +8,10 @@
 #include <G4EmStandardPhysics.hh>
 #include <G4GDMLParser.hh>
 #include <G4RunManager.hh>
+#include <G4UIExecutive.hh>
+#include <G4UImanager.hh>
 #include <G4VModularPhysicsList.hh>
+#include <G4VisExecutive.hh>
 
 #include "src/ActionInitialization.hh"
 #include "src/OpticalDetector.hh"
@@ -54,12 +57,18 @@ int main(int argc, char* argv[])
     run_manager.SetUserInitialization(new OpticalPhysics());
     run_manager.SetUserInitialization(new OpticalDetector());
     run_manager.SetUserInitialization(new ActionInitalization());
-
-    // TODO: maybe set up visualization?
-
-    // Initialize and run
     run_manager.Initialize();
+
+    // Visualization
+    auto qt_interface = new G4UIExecutive(1, argv);
+    auto vis_manager = new G4VisExecutive();
+    vis_manager->Initialize();
+
+    auto ui_manager = G4UImanager::GetUIpointer();
+    ui_manager->ApplyCommand("/control/execute vis.mac");
+
     run_manager.BeamOn(1);
+    qt_interface->SessionStart();
 
     if (false)
     {
