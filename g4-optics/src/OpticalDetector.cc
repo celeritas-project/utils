@@ -78,7 +78,7 @@ G4VPhysicalVolume* OpticalDetector::Construct()
     values.push_back(1);
     values.push_back(1);
     auto mat_property = std::make_unique<G4MaterialPropertyVector>(
-        energies, values, /*spline = */ false);
+        energies, values, /* spline = */ false);
 
     // Set up material properties table
     auto surface_properties = new G4MaterialPropertiesTable();

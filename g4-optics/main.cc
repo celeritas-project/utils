@@ -49,6 +49,8 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    bool const vis_interface = true;
+
     // Construct run manager
     G4RunManager run_manager;
     run_manager.SetVerboseLevel(0);
@@ -58,17 +60,19 @@ int main(int argc, char* argv[])
     run_manager.SetUserInitialization(new OpticalDetector());
     run_manager.SetUserInitialization(new ActionInitalization());
     run_manager.Initialize();
-
-    // Visualization
-    auto qt_interface = new G4UIExecutive(1, argv);
-    auto vis_manager = new G4VisExecutive();
-    vis_manager->Initialize();
-
-    auto ui_manager = G4UImanager::GetUIpointer();
-    ui_manager->ApplyCommand("/control/execute vis.mac");
-
     run_manager.BeamOn(1);
-    qt_interface->SessionStart();
+
+    if (vis_interface)
+    {
+        // Open visualization
+        auto qt_interface = new G4UIExecutive(argc, argv);
+        auto vis_manager = new G4VisExecutive();
+        vis_manager->Initialize();
+
+        auto ui_manager = G4UImanager::GetUIpointer();
+        ui_manager->ApplyCommand("/control/execute vis.mac");
+        qt_interface->SessionStart();
+    }
 
     if (false)
     {
