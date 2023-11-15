@@ -7,6 +7,7 @@
 //---------------------------------------------------------------------------//
 #include <G4EmStandardPhysics.hh>
 #include <G4GDMLParser.hh>
+#include <G4MaterialTable.hh>
 #include <G4RunManager.hh>
 #include <G4UIExecutive.hh>
 #include <G4UImanager.hh>
@@ -17,6 +18,37 @@
 #include "src/OpticalDetector.hh"
 #include "src/OpticalPhysics.hh"
 #include "src/PrimaryGenerator.hh"
+
+//---------------------------------------------------------------------------//
+//! Test optical properties export.
+void export_properties()
+{
+    auto const& g4material_table = G4Material::GetMaterialTable();
+    auto const num_materials = g4material_table->size();
+    std::cout << "materials size: " << num_materials << std::endl;
+
+    for (auto i = 0; i < num_materials; i++)
+    {
+        auto const* g4material = g4material_table->at(i);
+
+        auto const* mat_prop_table = g4material->GetMaterialPropertiesTable();
+
+        auto mat_properties = mat_prop_table->GetProperties();
+        auto mat_prop_names = mat_prop_table->GetMaterialPropertyNames();
+        std::cout << "property names size: " << mat_prop_names.size()
+                  << std::endl;
+
+        for (auto const& name : mat_prop_names)
+        {
+            std::cout << "property: " << name << std::endl;
+        }
+
+        for (auto const& prop : mat_properties)
+        {
+            // tbd
+        }
+    }
+}
 
 //---------------------------------------------------------------------------//
 //! HELPER function for exporting the geomtry as a GDML file.
@@ -49,8 +81,6 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    bool const vis_interface = true;
-
     // Construct run manager
     G4RunManager run_manager;
     run_manager.SetVerboseLevel(0);
@@ -60,8 +90,12 @@ int main(int argc, char* argv[])
     run_manager.SetUserInitialization(new OpticalDetector());
     run_manager.SetUserInitialization(new ActionInitalization());
     run_manager.Initialize();
-    run_manager.BeamOn(1);
+    run_manager.RunInitialization();
+    // run_manager.BeamOn(1);
 
+    export_properties();
+
+    bool const vis_interface = false;
     if (vis_interface)
     {
         // Open visualization
