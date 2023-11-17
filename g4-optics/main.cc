@@ -8,6 +8,7 @@
 #include <G4EmStandardPhysics.hh>
 #include <G4GDMLParser.hh>
 #include <G4MaterialTable.hh>
+#include <G4OpticalParameters.hh>
 #include <G4RunManager.hh>
 #include <G4UIExecutive.hh>
 #include <G4UImanager.hh>
@@ -93,7 +94,9 @@ int main(int argc, char* argv[])
     run_manager.RunInitialization();
     // run_manager.BeamOn(1);
 
-    export_properties();
+    G4OpticalParameters::Instance()->Dump();
+
+    // export_properties();
 
     bool const vis_interface = false;
     if (vis_interface)
