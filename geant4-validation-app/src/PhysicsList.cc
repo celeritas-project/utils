@@ -7,45 +7,35 @@
 //---------------------------------------------------------------------------//
 #include "PhysicsList.hh"
 
-#include "JsonReader.hh"
-#include "G4appMacros.hh"
-
-#include <G4ProcessManager.hh>
-#include <G4SystemOfUnits.hh>
-#include <G4PhysicsListHelper.hh>
-#include <G4TransportationManager.hh>
-
-#include <G4Gamma.hh>
-#include <G4Electron.hh>
-#include <G4Positron.hh>
-#include <G4Proton.hh>
-#include <G4GenericIon.hh>
-
-#include "BremsstrahlungProcess.hh"
-
-#include <G4PhotoElectricEffect.hh>
-#include <G4LivermorePhotoElectricModel.hh>
-
 #include <G4ComptonScattering.hh>
-
-#include <G4GammaConversion.hh>
-#include <G4PairProductionRelModel.hh>
-
 #include <G4CoulombScattering.hh>
-#include <G4eCoulombScatteringModel.hh>
-
-#include <G4eIonisation.hh>
-#include <G4MollerBhabhaModel.hh>
-
-#include <G4RayleighScattering.hh>
+#include <G4Electron.hh>
+#include <G4Gamma.hh>
+#include <G4GammaConversion.hh>
+#include <G4GenericIon.hh>
+#include <G4LivermorePhotoElectricModel.hh>
 #include <G4LivermoreRayleighModel.hh>
-
-#include <G4eplusAnnihilation.hh>
-#include <G4eeToTwoGammaModel.hh>
-
-#include <G4eMultipleScattering.hh>
+#include <G4MollerBhabhaModel.hh>
+#include <G4PairProductionRelModel.hh>
+#include <G4PhotoElectricEffect.hh>
+#include <G4PhysicsListHelper.hh>
+#include <G4Positron.hh>
+#include <G4ProcessManager.hh>
+#include <G4Proton.hh>
+#include <G4RayleighScattering.hh>
+#include <G4SystemOfUnits.hh>
+#include <G4TransportationManager.hh>
 #include <G4UrbanMscModel.hh>
 #include <G4WentzelVIModel.hh>
+#include <G4eCoulombScatteringModel.hh>
+#include <G4eIonisation.hh>
+#include <G4eMultipleScattering.hh>
+#include <G4eeToTwoGammaModel.hh>
+#include <G4eplusAnnihilation.hh>
+
+#include "BremsstrahlungProcess.hh"
+#include "G4appMacros.hh"
+#include "JsonReader.hh"
 
 //---------------------------------------------------------------------------//
 /*!
@@ -53,8 +43,8 @@
  */
 PhysicsList::PhysicsList() : G4VUserPhysicsList()
 {
-    const auto  json     = JsonReader::instance()->json();
-    const auto& json_sim = json.at("simulation");
+    auto const json = JsonReader::instance()->json();
+    auto const& json_sim = json.at("simulation");
 
     // Update selected processes according to the json
     for (auto pair : selected_processes_)
@@ -69,7 +59,7 @@ PhysicsList::PhysicsList() : G4VUserPhysicsList()
     em_parameters->SetLossFluctuations(eloss_fluct);
 
     // TODO implement binning
-    // em_parameters->SetNumberOfBinsPerDecade(nbins);
+    em_parameters->SetNumberOfBinsPerDecade(56);
 
     // Set verbosity level
     int level = json.at("verbosity").at("PhysicsList").get<int>();
@@ -102,11 +92,11 @@ void PhysicsList::ConstructParticle()
     G4Positron::PositronDefinition();
     G4Proton::ProtonDefinition();
 
-    const bool msc_on
+    bool const msc_on
         = (selected_processes_.find("multiple_scattering_low")->second
            || selected_processes_.find("multiple_scattering_high")->second);
 
-    const bool coulomb_on
+    bool const coulomb_on
         = selected_processes_.find("coulomb_scattering")->second;
 
     if (msc_on || coulomb_on)
@@ -147,8 +137,8 @@ void PhysicsList::ConstructProcess()
  */
 void PhysicsList::add_gamma_processes()
 {
-    auto       physics_list = G4PhysicsListHelper::GetPhysicsListHelper();
-    const auto gamma        = G4Gamma::Gamma();
+    auto physics_list = G4PhysicsListHelper::GetPhysicsListHelper();
+    auto const gamma = G4Gamma::Gamma();
 
     if (selected_processes_.find("compton_scattering")->second)
     {
@@ -219,7 +209,7 @@ void PhysicsList::add_e_processes(G4ParticleDefinition* particle)
     if (selected_processes_.find("bremsstrahlung")->second)
     {
         // Bremmstrahlung: G4SeltzerBergerModel + G4eBremsstrahlungRelModel
-        auto models        = BremsstrahlungProcess::ModelSelection::all;
+        auto models = BremsstrahlungProcess::ModelSelection::all;
         auto brems_process = std::make_unique<BremsstrahlungProcess>(models);
         physics_list->RegisterProcess(brems_process.release(), particle);
 
@@ -232,7 +222,7 @@ void PhysicsList::add_e_processes(G4ParticleDefinition* particle)
             // information on which "do its" are activated for each process and
             // the default process ordering.
             auto* process_manager = particle->GetProcessManager();
-            auto* bremsstrahlung  = dynamic_cast<BremsstrahlungProcess*>(
+            auto* bremsstrahlung = dynamic_cast<BremsstrahlungProcess*>(
                 process_manager->GetProcess("eBrem"));
             auto order = process_manager->GetProcessOrdering(
                 bremsstrahlung, G4ProcessVectorDoItIndex::idxPostStep);
@@ -247,11 +237,11 @@ void PhysicsList::add_e_processes(G4ParticleDefinition* particle)
     if (selected_processes_.find("coulomb_scattering")->second)
     {
         // Coulomb scattering: G4eCoulombScatteringModel
-        const double msc_threshold_energy
+        double const msc_threshold_energy
             = G4EmParameters::Instance()->MscEnergyLimit();
 
         auto coulomb_process = std::make_unique<G4CoulombScattering>();
-        auto coulomb_model   = std::make_unique<G4eCoulombScatteringModel>();
+        auto coulomb_model = std::make_unique<G4eCoulombScatteringModel>();
         coulomb_process->SetMinKinEnergy(msc_threshold_energy);
         coulomb_model->SetLowEnergyLimit(msc_threshold_energy);
         coulomb_model->SetActivationLowEnergyLimit(msc_threshold_energy);
@@ -259,15 +249,15 @@ void PhysicsList::add_e_processes(G4ParticleDefinition* particle)
         physics_list->RegisterProcess(coulomb_process.release(), particle);
     }
 
-    const bool msc_low
+    bool const msc_low
         = selected_processes_.find("multiple_scattering_low")->second;
-    const bool msc_high
+    bool const msc_high
         = selected_processes_.find("multiple_scattering_high")->second;
 
     if (msc_low || msc_high)
     {
         // Multiple scattering
-        const double msc_threshold_energy
+        double const msc_threshold_energy
             = G4EmParameters::Instance()->MscEnergyLimit();
         auto msc_process = std::make_unique<G4eMultipleScattering>();
 

@@ -13,7 +13,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 #----------------------------------------------------------------------------#
 # Find packages
 #----------------------------------------------------------------------------#
-find_package(Geant4 REQUIRED)
+find_package(Geant4 REQUIRED gdml vis_all)
 
 #----------------------------------------------------------------------------#
 # Copy vis.mac to build directory

@@ -27,5 +27,6 @@ void PrimaryGenerator::GeneratePrimaries(G4Event* event)
     gun.SetParticleEnergy(1 * MeV);
     gun.SetParticlePosition(G4ThreeVector(-3 * m, 0, 0));  // Before box
     gun.SetParticleMomentumDirection(G4ThreeVector(1, 0, 0));  // +x
+    gun.SetParticlePolarization(G4ThreeVector(1, 0, 0));
     gun.GeneratePrimaryVertex(event);
 }

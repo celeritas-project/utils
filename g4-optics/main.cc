@@ -32,21 +32,20 @@ void export_properties()
     {
         auto const* g4material = g4material_table->at(i);
 
-        auto const* mat_prop_table = g4material->GetMaterialPropertiesTable();
-
-        auto mat_properties = mat_prop_table->GetProperties();
-        auto mat_prop_names = mat_prop_table->GetMaterialPropertyNames();
-        std::cout << "property names size: " << mat_prop_names.size()
-                  << std::endl;
-
-        for (auto const& name : mat_prop_names)
+        if (auto const* mat_prop_table
+            = g4material->GetMaterialPropertiesTable())
         {
-            std::cout << "property: " << name << std::endl;
-        }
+            // G4MaterialPropertiesTable* is null if no optical prop assigned
+            auto mat_properties = mat_prop_table->GetProperties();
+            auto mat_prop_names = mat_prop_table->GetMaterialPropertyNames();
 
-        for (auto const& prop : mat_properties)
-        {
-            // tbd
+            for (int i = 0; i < mat_properties.size(); i++)
+            {
+                // Names and properties are stored with the same index
+                auto prop = mat_properties.at(i);
+                std::cout << i << " : name " << mat_prop_names.at(i) << " / "
+                          << prop << std::endl;
+            }
         }
     }
 }
@@ -87,27 +86,24 @@ int main(int argc, char* argv[])
     run_manager.SetVerboseLevel(0);
 
     // Initialize physics, geometry, and actions
-    run_manager.SetUserInitialization(new OpticalPhysics());
     run_manager.SetUserInitialization(new OpticalDetector());
+    run_manager.SetUserInitialization(new OpticalPhysics());
     run_manager.SetUserInitialization(new ActionInitalization());
     run_manager.Initialize();
-    run_manager.RunInitialization();
-    // run_manager.BeamOn(1);
 
-    G4OpticalParameters::Instance()->Dump();
+    auto qt_interface = new G4UIExecutive(argc, argv);
+    auto vis_manager = new G4VisExecutive();
+    vis_manager->Initialize();
 
-    // export_properties();
+    auto ui_manager = G4UImanager::GetUIpointer();
+    ui_manager->ApplyCommand("/control/execute vis.mac");
+
+    run_manager.BeamOn(1);
 
     bool const vis_interface = false;
     if (vis_interface)
     {
         // Open visualization
-        auto qt_interface = new G4UIExecutive(argc, argv);
-        auto vis_manager = new G4VisExecutive();
-        vis_manager->Initialize();
-
-        auto ui_manager = G4UImanager::GetUIpointer();
-        ui_manager->ApplyCommand("/control/execute vis.mac");
         qt_interface->SessionStart();
     }
 
@@ -116,6 +112,9 @@ int main(int argc, char* argv[])
         // Generate gdml for testing
         export_gdml();
     }
+
+    // G4OpticalParameters::Instance()->Dump();
+    export_properties();
 
     return EXIT_SUCCESS;
 }
