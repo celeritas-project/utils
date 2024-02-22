@@ -17,6 +17,7 @@
 #include <G4OpticalPhoton.hh>
 #include <G4Positron.hh>
 #include <G4ProcessManager.hh>
+#include <G4Proton.hh>
 
 //---------------------------------------------------------------------------//
 /*!
@@ -32,9 +33,11 @@ OpticalPhysics::OpticalPhysics() : G4VUserPhysicsList() {}
  */
 void OpticalPhysics::ConstructParticle()
 {
+    G4Proton::ProtonDefinition();
     G4Electron::ElectronDefinition();
     G4Positron::PositronDefinition();
     G4Gamma::GammaDefinition();
+
     G4OpticalPhoton::OpticalPhotonDefinition();
 }
 

@@ -38,7 +38,7 @@ G4VPhysicalVolume* OpticalDetector::Construct()
 
     // For reflection/refraction: need surface model, type, finish
     auto optical_surface = new G4OpticalSurface("optical_surface");
-    optical_surface->SetModel(G4OpticalSurfaceModel::unified);
+    optical_surface->SetModel(G4OpticalSurfaceModel::glisur);
     optical_surface->SetType(G4SurfaceType::dielectric_metal);
     optical_surface->SetFinish(G4OpticalSurfaceFinish::polished);
     optical_surface->SetSigmaAlpha(CLHEP::pi);
@@ -56,7 +56,7 @@ G4VPhysicalVolume* OpticalDetector::Construct()
     auto surface_properties = new G4MaterialPropertiesTable();
     surface_properties->AddProperty("REFLECTIVITY",
                                     mat_property.release(),
-                                    /* create new key = */ true);
+                                    /* create new key = */ false);
     optical_surface->SetMaterialPropertiesTable(surface_properties);
 
     //// Add properties to materials ////

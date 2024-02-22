@@ -10,9 +10,9 @@
 #include <algorithm>
 #include <G4Event.hh>
 #include <G4EventManager.hh>
+#include <accel/ExceptionConverter.hh>
 
 #include "Celeritas.hh"
-#include <accel/ExceptionConverter.hh>
 #include "JsonReader.hh"
 
 //---------------------------------------------------------------------------//
@@ -21,8 +21,8 @@
  */
 EventAction::EventAction() : G4UserEventAction(), root_io_(RootIO::instance())
 {
-    const auto& json = JsonReader::instance()->json();
-    offload_         = json.at("simulation").at("offload").get<bool>();
+    auto const& json = JsonReader::instance()->json();
+    offload_ = json.at("simulation").at("offload").get<bool>();
     store_primaries_ = json.at("simulation").at("primary_info").get<bool>();
     store_secondaries_ = json.at("simulation").at("secondary_info").get<bool>();
     G4EventManager::GetEventManager()->SetVerboseLevel(
@@ -33,13 +33,13 @@ EventAction::EventAction() : G4UserEventAction(), root_io_(RootIO::instance())
 /*
  * Clear event in ROOT I/O and set up any needed event information.
  */
-void EventAction::BeginOfEventAction(const G4Event* event)
+void EventAction::BeginOfEventAction(G4Event const* event)
 {
     if (offload_)
     {
         celeritas::ExceptionConverter call_g4exception{"celer0002"};
         CELER_TRY_HANDLE(
-            CelerLocalTransporter().SetEventId(event->GetEventID()),
+            CelerLocalTransporter().InitializeEvent(event->GetEventID()),
             call_g4exception);
     }
 
@@ -49,7 +49,7 @@ void EventAction::BeginOfEventAction(const G4Event* event)
     }
 
     root_io_->clear_event();
-    root_io_->event_.id        = event->GetEventID();
+    root_io_->event_.id = event->GetEventID();
     root_io_->steps_per_event_ = 0;
 }
 
@@ -57,7 +57,7 @@ void EventAction::BeginOfEventAction(const G4Event* event)
 /*
  * Fill ROOT I/O event TTree and store data limits.
  */
-void EventAction::EndOfEventAction(const G4Event*)
+void EventAction::EndOfEventAction(G4Event const*)
 {
     if (offload_)
     {
