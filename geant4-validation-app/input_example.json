@@ -38,7 +38,9 @@
         "e_ionization": true,
         "coulomb_scattering": false,
         "multiple_scattering_low": false,
-        "multiple_scattering_high": false
+        "multiple_scattering_high": false,
+        "scintillation": true,
+        "cerenkov": true
     },
     "verbosity": {
         "RunManager": 0,

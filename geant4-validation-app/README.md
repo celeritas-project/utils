@@ -101,7 +101,9 @@ used if `USE_QT=OFF`.
         "e_ionization": true,
         "coulomb_scattering": false,
         "multiple_scattering_low": false,
-        "multiple_scattering_high": false
+        "multiple_scattering_high": false,
+        "scintillation": false,
+        "cerenkov": false
     },
     "verbosity": {
         "RunManager": 0,
