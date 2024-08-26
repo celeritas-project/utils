@@ -84,26 +84,24 @@ void SteppingAction::store_step_data(G4Step const* step)
         // Post step status is undefined; GetProcessDefinedStep() is a nullptr
         // Only caused by geantinos
         this_step.process_id = rootdata::ProcessId::not_mapped;
-        std::cout << "not mapped" << std::endl;
     }
     else
     {
         // Post step is defined; find its ID
         this_step.process_id = rootdata::to_process_name_id(
             step->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName());
-        std::cout
-            << step->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName()
-            << std::endl;
     }
 
     this_step.kinetic_energy = post_step->GetKineticEnergy() / MeV;
     this_step.energy_loss = step->GetTotalEnergyDeposit() / MeV;
     this_step.length = step->GetStepLength() / cm;
     this_step.global_time = post_step->GetGlobalTime() / s;
-    G4ThreeVector pos = post_step->GetPosition() / cm;
-    G4ThreeVector dir = post_step->GetMomentumDirection();
+    auto pos = post_step->GetPosition() / cm;
+    auto dir = post_step->GetMomentumDirection();
+    auto pol = post_step->GetPolarization();
     this_step.position = {pos.x(), pos.y(), pos.z()};
     this_step.direction = {dir.x(), dir.y(), dir.z()};
+    this_step.polarization = {pol.x(), pol.y(), pol.z()};
 
     root_io_->track_.steps.push_back(std::move(this_step));
 

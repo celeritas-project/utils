@@ -106,6 +106,10 @@ void PrimaryGeneratorAction::set_particle_gun()
                             part_gun.at("direction")[1].get<double>(),
                             part_gun.at("direction")[2].get<double>());
     direction = direction.unit();
+    G4ThreeVector polarization(part_gun.at("polarization")[0].get<double>(),
+                               part_gun.at("polarization")[1].get<double>(),
+                               part_gun.at("polarization")[2].get<double>());
+    polarization = polarization.unit();
 
     // Create the particle gun
     int const number_of_particles = 1;
@@ -115,6 +119,7 @@ void PrimaryGeneratorAction::set_particle_gun()
     particle_gun_->SetParticleDefinition(
         G4ParticleTable::GetParticleTable()->FindParticle(primary.pdg));
     particle_gun_->SetParticleMomentumDirection(direction);
+    particle_gun_->SetParticlePolarization(polarization);
     particle_gun_->SetParticleEnergy(primary.energy);
     particle_gun_->SetParticlePosition(vertex);
 }
