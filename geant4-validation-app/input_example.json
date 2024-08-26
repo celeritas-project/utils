@@ -39,8 +39,8 @@
         "coulomb_scattering": false,
         "multiple_scattering_low": false,
         "multiple_scattering_high": false,
-        "scintillation": true,
-        "cerenkov": true
+        "scintillation": false,
+        "cerenkov": false
     },
     "verbosity": {
         "RunManager": 0,
