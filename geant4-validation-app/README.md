@@ -78,8 +78,13 @@ used if `USE_QT=OFF`.
             ],
             "direction": [
                 1,
+                0,
+                0
+            ],
+            "polarization": [
                 1,
-                1
+                0,
+                0
             ]
         },
         "num_threads": 4,
@@ -104,7 +109,9 @@ used if `USE_QT=OFF`.
         "multiple_scattering_low": false,
         "multiple_scattering_high": false,
         "scintillation": false,
-        "cerenkov": false
+        "cerenkov": false,
+        "optical_rayleigh": false
+
     },
     "verbosity": {
         "RunManager": 0,
