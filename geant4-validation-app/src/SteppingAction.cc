@@ -38,6 +38,12 @@ void SteppingAction::UserSteppingAction(G4Step const* step)
         return;
     }
 
+    if (step->GetTrack()->GetCurrentStepNumber() > 2)
+    {
+        step->GetTrack()->SetTrackStatus(G4TrackStatus::fStopAndKill);
+        return;
+    }
+
     auto const parent_id = step->GetTrack()->GetParentID();
 
     if (store_primary_ && parent_id == 0)
