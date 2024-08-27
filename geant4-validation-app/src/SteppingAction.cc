@@ -1,5 +1,5 @@
 //----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2023 UT-Battelle, LLC, and other Celeritas developers.
+// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
@@ -38,20 +38,10 @@ void SteppingAction::UserSteppingAction(G4Step const* step)
         return;
     }
 
-    if (step->GetTrack()->GetCurrentStepNumber() > 2)
-    {
-        step->GetTrack()->SetTrackStatus(G4TrackStatus::fStopAndKill);
-        return;
-    }
+    auto const& parent_id = step->GetTrack()->GetParentID();
 
-    auto const parent_id = step->GetTrack()->GetParentID();
-
-    if (store_primary_ && parent_id == 0)
-    {
-        store_track_data(step);
-    }
-
-    if (store_secondary_ && parent_id != 0)
+    if ((store_primary_ && parent_id == 0)
+        || (store_secondary_ && parent_id != 0))
     {
         store_track_data(step);
     }
@@ -102,9 +92,9 @@ void SteppingAction::store_step_data(G4Step const* step)
     this_step.energy_loss = step->GetTotalEnergyDeposit() / MeV;
     this_step.length = step->GetStepLength() / cm;
     this_step.global_time = post_step->GetGlobalTime() / s;
-    auto pos = post_step->GetPosition() / cm;
-    auto dir = post_step->GetMomentumDirection();
-    auto pol = post_step->GetPolarization();
+    auto const& pos = post_step->GetPosition() / cm;
+    auto const& dir = post_step->GetMomentumDirection();
+    auto const& pol = post_step->GetPolarization();
     this_step.position = {pos.x(), pos.y(), pos.z()};
     this_step.direction = {dir.x(), dir.y(), dir.z()};
     this_step.polarization = {pol.x(), pol.y(), pol.z()};
