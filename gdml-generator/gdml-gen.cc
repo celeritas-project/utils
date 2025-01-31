@@ -304,10 +304,10 @@ int main(int argc, char* argv[])
             break;
 
         case GeometryID::simple_lz:
+            gdml_filename = "simple_lz.gdml";
             if (argc == 2)
             {
                 run_manager->SetUserInitialization(new SimpleLZ());
-                gdml_filename = "simple_lz.gdml";
                 break;
             }
             else if (argc == 3)
@@ -321,7 +321,6 @@ int main(int argc, char* argv[])
                     return EXIT_FAILURE;
                 }
                 run_manager->SetUserInitialization(new SimpleLZ(sqrt_num_pmts));
-                gdml_filename = "simple_lz.gdml";
                 break;
             }
             else

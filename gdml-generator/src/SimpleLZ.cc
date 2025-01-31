@@ -166,19 +166,19 @@ G4VPhysicalVolume* SimpleLZ::Construct()
     if (sqrt_num_pmts_ == 0)
     {
         // Simple LZ model
+        G4Tubs* pmt
+            = new G4Tubs("pmt", 0, 39 * mm, 123 * mm, 0 * deg, 360 * deg);
+        auto const pmt_lv = new G4LogicalVolume(pmt, pmt_mat, "pmt_lv");
+
         for (auto i = 0; i < 253; ++i)
         {
-            G4Tubs* pmt
-                = new G4Tubs("pmt", 0, 39 * mm, 123 * mm, 0 * deg, 360 * deg);
-            std::string pmt_name = "pmt_" + std::to_string(i);
-            auto const pmt_lv = new G4LogicalVolume(pmt, pmt_mat, pmt_name);
             new G4PVPlacement(nullptr,
                               G4ThreeVector({pmt_x[i] * mm, pmt_y[i] * mm, 0}),
                               pmt_lv,
                               "pmt_pv",
                               world_lv,
                               false,
-                              0,
+                              i,
                               false);
         }
     }
@@ -190,14 +190,14 @@ G4VPhysicalVolume* SimpleLZ::Construct()
         double pmt_radius = (pmt_pitch - 1 * mm) / 2;
         double offset = a / 2 - pmt_pitch / 2;
 
+        G4Tubs* pmt
+            = new G4Tubs("pmt", 0, pmt_radius, 123 * mm, 0 * deg, 360 * deg);
+        auto const pmt_lv = new G4LogicalVolume(pmt, pmt_mat, "pmt_lv");
+
         for (auto i = 0; i < sqrt_num_pmts_; ++i)
         {
             for (auto j = 0; j < sqrt_num_pmts_; ++j)
             {
-                G4Tubs* pmt = new G4Tubs(
-                    "pmt", 0, pmt_radius, 123 * mm, 0 * deg, 360 * deg);
-                std::string pmt_name = "pmt_" + std::to_string(i);
-                auto const pmt_lv = new G4LogicalVolume(pmt, pmt_mat, pmt_name);
                 new G4PVPlacement(nullptr,
                                   G4ThreeVector({pmt_pitch * i - offset,
                                                  pmt_pitch * j - offset,
@@ -206,7 +206,7 @@ G4VPhysicalVolume* SimpleLZ::Construct()
                                   "pmt_pv",
                                   world_lv,
                                   false,
-                                  0,
+                                  i,
                                   false);
             }
         }
@@ -221,9 +221,9 @@ G4VPhysicalVolume* SimpleLZ::Construct()
  */
 void SimpleLZ::ConstructSDandField()
 {
-    auto slab_sb = new SensitiveDetector("cylinder_sd");
-    G4SDManager::GetSDMpointer()->AddNewDetector(slab_sb);
-    G4VUserDetectorConstruction::SetSensitiveDetector("world", slab_sb);
+    auto pmt_sd = new SensitiveDetector("pmt_sd");
+    G4SDManager::GetSDMpointer()->AddNewDetector(pmt_sd);
+    G4VUserDetectorConstruction::SetSensitiveDetector("pmt_lv", pmt_sd);
 }
 
 //---------------------------------------------------------------------------//
