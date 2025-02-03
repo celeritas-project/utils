@@ -29,5 +29,6 @@ class SimpleLZ : public G4VUserDetectorConstruction
     // Set up sensitive detectors and magnetic field
     void ConstructSDandField() final;
 
+  private:
     int sqrt_num_pmts_;
 };
