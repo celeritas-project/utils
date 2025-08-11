@@ -7,6 +7,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <G4ThreadLocalSingleton.hh>
 #include <TFile.h>
@@ -43,15 +44,12 @@ class RootIO
     // Get reference to thread-local Histogram data
     MCHist& Histograms() { return hist_; }
 
-    void Finalize();
-
   private:
     //// DATA ////
 
     TFile* file_;
     TTree* tree_;
-
-    // Step and hit data
+    // MC truth TTree data
     Step step_;
     Hit hit_;
 
@@ -63,6 +61,9 @@ class RootIO
 
     // Construct with filename on worker thread
     RootIO();
+
+    // Destruct by writing histograms/TTree and file to disk
+    ~RootIO();
 
     //! ROOT TTree split level
     static constexpr short int SplitLevel() { return 99; }

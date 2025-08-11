@@ -23,7 +23,7 @@ RootIO* RootIO::Instance()
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct thread-local Root IO.
+ * Construct thread-local ROOT I/O.
  */
 RootIO::RootIO()
 {
@@ -32,24 +32,32 @@ RootIO::RootIO()
     CELER_VALIDATE(G4Threading::IsWorkerThread(),
                    << "Must be constructed on worker thread");
 
-    std::string filename = "test";
+    std::string filename = "test";  // \todo: load from input
     CELER_VALIDATE(!filename.empty(), << "ROOT filename must be non-empty");
     std::string thread_filename
         = filename + "-" + std::to_string(G4Threading::G4GetThreadId())
           + ".root";
-    file_ = TFile::Open(thread_filename.c_str(), "recreate");
+
     CELER_LOG_LOCAL(status) << "Open file " << thread_filename;
+    file_ = TFile::Open(thread_filename.c_str(), "recreate");
     tree_ = new TTree("steps", "steps", this->SplitLevel(), this->file_);
 
-    // Initialize histograms
-    hist_.energy = TH1D("energy", "energy", 100, 0, 100);
+    hist_.Initialize();
 }
 
 //---------------------------------------------------------------------------//
-void RootIO::Finalize()
+/*!
+ * Destruct by writing histograms and TTree data to thread-local ROOT file, and
+ * write/close.
+ */
+RootIO::~RootIO()
 {
-    CELER_LOG_LOCAL(status)
-        << "Writing '" << file_->GetName() << "' file to disk";
+    {
+        static std::mutex mutex_log;
+        std::lock_guard<std::mutex> scoped_lock{mutex_log};
+        CELER_LOG_LOCAL(status)
+            << "Writing '" << file_->GetName() << "' file to disk";
+    }
     tree_->Write();
     auto* hist_dir = file_->mkdir("histograms");
     hist_dir->cd();

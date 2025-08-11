@@ -18,6 +18,9 @@ class EventAction final : public G4UserEventAction
   public:
     EventAction() = default;
 
-    void BeginOfEventAction(G4Event const*) final;
-    void EndOfEventAction(G4Event const* event) final;
+    // Begin of event user-action
+    void BeginOfEventAction(G4Event const* event) final;
+
+    // End of event user-action
+    void EndOfEventAction(G4Event const*) final {};
 };

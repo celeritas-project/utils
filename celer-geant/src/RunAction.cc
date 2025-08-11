@@ -34,9 +34,5 @@ void RunAction::BeginOfRunAction(G4Run const* run)
  */
 void RunAction::EndOfRunAction(G4Run const* run)
 {
-    if (G4Threading::IsWorkerThread())
-    {
-        RootIO::Instance()->Finalize();
-    }
     celeritas::TrackingManagerIntegration::Instance().EndOfRunAction(run);
 }

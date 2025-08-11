@@ -16,18 +16,9 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * At the end of each event, copy statistics from the local Celeritas state.
+ * Thread-local begin event action.
  */
 void EventAction::BeginOfEventAction(G4Event const* event)
 {
     CELER_LOG_LOCAL(status) << "Begin event " << event->GetEventID();
-}
-
-//---------------------------------------------------------------------------//
-/*!
- * At the end of each event, copy statistics from the local Celeritas state.
- */
-void EventAction::EndOfEventAction(G4Event const* event)
-{
-    auto& state = celeritas::TrackingManagerIntegration::Instance().GetState();
 }

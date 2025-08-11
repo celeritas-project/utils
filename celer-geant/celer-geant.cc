@@ -7,12 +7,12 @@
 //---------------------------------------------------------------------------//
 #include <iostream>
 #include <memory>
-#include <FTFP_BERT.hh>
 #include <G4RunManagerFactory.hh>
 #include <G4Threading.hh>
 #include <G4UImanager.hh>
 #include <accel/TrackingManagerConstructor.hh>
 #include <accel/TrackingManagerIntegration.hh>
+#include <celeritas/ext/EmPhysicsList.hh>
 
 #include "ActionInitialization.hh"
 #include "DetectorConstruction.hh"
@@ -37,25 +37,27 @@ int main(int argc, char* argv[])
     std::unique_ptr<G4RunManager> run_manager;
     run_manager.reset(
         G4RunManagerFactory::CreateRunManager(G4RunManagerType::Default));
-    run_manager->SetNumberOfThreads(5);
+
+    // \todo: set number of threads from input data
+    run_manager->SetNumberOfThreads(1);
 
     // Initialize Celeritas
     auto& tmi = celeritas::TrackingManagerIntegration::Instance();
-
-    // Initialize physics with celeritas offload
-    auto* physics_list = new FTFP_BERT{/* verbosity = */ 0};  // todo: FIXME
-    physics_list->RegisterPhysics(
-        new celeritas::TrackingManagerConstructor(&tmi));
-    run_manager->SetUserInitialization(physics_list);
     tmi.SetOptions(celeritas::MakeCelerOptions());
+
+    // Initialize physics with Celeritas offload
+    celeritas::GeantPhysicsOptions phys_opts;
+    auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
+    physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
+    run_manager->SetUserInitialization(physics.release());
 
     // Initialize geometry and actions
     run_manager->SetUserInitialization(new DetectorConstruction(gdml_input));
     run_manager->SetUserInitialization(new ActionInitialization());
 
-    // Run four events
+    // Run events
     run_manager->Initialize();
-    run_manager->BeamOn(20);
+    run_manager->BeamOn(2);
 
     return EXIT_SUCCESS;
 }

@@ -73,7 +73,7 @@ void DetectorConstruction::set_sd()
         {
             if (element.type != "SensDet")
             {
-                // Not a sensitive detector auxiliary type; Skip
+                // Skip non-sensitive detector auxiliary types
                 continue;
             }
 

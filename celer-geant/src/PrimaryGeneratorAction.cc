@@ -29,7 +29,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
     G4ParticleGun particle_gun;
     particle_gun.SetParticleDefinition(
-        G4ParticleTable::GetParticleTable()->FindParticle(211));  // pi+
+        G4ParticleTable::GetParticleTable()->FindParticle(11));
     particle_gun.SetParticleEnergy(150 * MeV);
     particle_gun.SetParticlePosition(G4ThreeVector());  // Origin
     particle_gun.SetParticleMomentumDirection(G4ThreeVector(1, 0, 0));  // +x
