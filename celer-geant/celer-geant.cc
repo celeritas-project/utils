@@ -16,6 +16,7 @@
 
 #include "ActionInitialization.hh"
 #include "DetectorConstruction.hh"
+#include "JsonReader.hh"
 #include "MakeCelerOptions.hh"
 
 //---------------------------------------------------------------------------//
@@ -24,15 +25,15 @@
  */
 int main(int argc, char* argv[])
 {
-    if (argc > 2)
+    if (argc != 2)
     {
         // Print help message
         std::cout << "Usage: " << argv[0] << " input.json" << std::endl;
         return EXIT_FAILURE;
     }
 
-    std::string gdml_input
-        = "/Users/4s2/celeritas-project/celeritas/app/data/simple-cms.gdml";
+    // Load input file
+    JsonReader::Construct(argv[1]);
 
     std::unique_ptr<G4RunManager> run_manager;
     run_manager.reset(
@@ -52,7 +53,8 @@ int main(int argc, char* argv[])
     run_manager->SetUserInitialization(physics.release());
 
     // Initialize geometry and actions
-    run_manager->SetUserInitialization(new DetectorConstruction(gdml_input));
+    run_manager->SetUserInitialization(new DetectorConstruction(
+        JsonReader::Instance().at("geometry").get<std::string>()));
     run_manager->SetUserInitialization(new ActionInitialization());
 
     // Run events

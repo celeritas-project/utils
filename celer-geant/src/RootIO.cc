@@ -41,7 +41,6 @@ RootIO::RootIO()
     CELER_LOG_LOCAL(status) << "Open file " << thread_filename;
     file_ = TFile::Open(thread_filename.c_str(), "recreate");
     tree_ = new TTree("steps", "steps", this->SplitLevel(), this->file_);
-
     hist_.Initialize();
 }
 

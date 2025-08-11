@@ -18,8 +18,10 @@ endif()
 #-----------------------------------------------------------------------------#
 # Find packages
 find_package(Celeritas 0.6 REQUIRED)
-find_package(Geant4 REQUIRED)
+find_package(Geant4 REQUIRED gdml) # TODO: check minimum version
 find_package(ROOT REQUIRED)
+find_package(HepMC3 REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 if(NOT Celeritas_FOUND)
   message(FATAL_ERROR
@@ -39,6 +41,7 @@ set(SOURCES
   src/ActionInitialization.cc
   src/DetectorConstruction.cc
   src/EventAction.cc
+  src/JsonReader.cc
   src/MakeCelerOptions.cc
   src/PrimaryGeneratorAction.cc
   src/RootIO.cc
@@ -57,9 +60,11 @@ target_include_directories(celer-geant PRIVATE
 
 # Use special linking macros to support CUDA+VecGeom
 celeritas_target_link_libraries(celer-geant
+  Celeritas::celeritas
+  Celeritas::G4
   ${Geant4_LIBRARIES}
   ROOT::Tree
   ROOT::Hist
-  Celeritas::celeritas # for user action
-  Celeritas::G4
+  HepMC3::HepMC3
+  nlohmann_json::nlohmann_json
 )
