@@ -9,11 +9,28 @@
 #include <G4Event.hh>
 #include <corecel/io/Logger.hh>
 
+#include "JsonReader.hh"
+
 //---------------------------------------------------------------------------//
 /*!
- * Thread-local begin event action.
+ * Construct thread-local event action and set up event logging.
+ */
+EventAction::EventAction() : G4UserEventAction()
+{
+    auto json = JsonReader::Instance();
+    log_progress_ = (json.count("log_progress") != 0)
+                        ? json.at("log_progress").get<size_t>()
+                        : 1;
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Thread-local begin of event action.
  */
 void EventAction::BeginOfEventAction(G4Event const* event)
 {
-    CELER_LOG_LOCAL(status) << "Begin event " << event->GetEventID();
+    if (auto const id = event->GetEventID(); id % log_progress_ == 0)
+    {
+        CELER_LOG_LOCAL(status) << "Begin event " << id;
+    }
 }

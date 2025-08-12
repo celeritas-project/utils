@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     // Load input file
     JsonReader::Construct(argv[1]);
     auto const& json = JsonReader::Instance();
-    auto const num_threads = json.at("run").at("num_threads").get<size_t>();
+    auto const num_threads = json.at("num_threads").get<size_t>();
 
     CELER_VALIDATE(num_threads > 0, << "Number of threads must be positive");
 
@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 
     // Run events
     run_manager->Initialize();
-    run_manager->BeamOn(2);
+    run_manager->BeamOn(20);
 
     return EXIT_SUCCESS;
 }

@@ -4,8 +4,9 @@ Celeritas-Geant4 offloading app for validation
 Dependencies
 ------------
 
-- Geant4 v11 or newer
-- Celeritas v0.5 or newer with ``CELERITAS_USE_Geant4=ON``
+- Geant4 v11 or newer with `GEANT4_USE_GDML=ON` and
+  `GEANT4_BUILD_MULTITHREADED=ON`
+- Celeritas v0.6 or newer with `CELERITAS_USE_Geant4=ON`
 - ROOT
 
 Build and run
@@ -16,6 +17,5 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ make
-$ export CELER_DISABLE_PARALLEL=1 # if Celeritas is built with MPI
-$ ./celer-geant
+$ ./celer-geant input.json
 ```

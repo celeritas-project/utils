@@ -24,10 +24,12 @@ struct SDHistograms
     {
         SDHistograms result;
         result.sd_name = name;
+
         std::string energy_name = name + "_energy";
-        std::string time_name = name + "_time";
         result.energy
-            = TH1D(energy_name.c_str(), energy_name.c_str(), 100, 0, 100);
+            = TH1D(energy_name.c_str(), energy_name.c_str(), 100, 0, 5);
+
+        std::string time_name = name + "_time";
         result.time
             = TH1D(time_name.c_str(), time_name.c_str(), 100, -100, 100);
         return result;
@@ -36,8 +38,8 @@ struct SDHistograms
 
 //---------------------------------------------------------------------------//
 /*!
- * Helper struct used to index physical volumes to a vector index.
- * (std::map<SensDetId, index> map)
+ * Helper struct for indexing physical volumes to an object.
+ * (e.g. std::map<SensDetId, Object> map)
  */
 struct SensDetId
 {
@@ -45,6 +47,8 @@ struct SensDetId
     size_t copy_number;
 };
 
+//---------------------------------------------------------------------------//
+//! Overload \c operator< for \c map.find(sensdetid) compatibility.
 inline bool operator<(SensDetId const& lhs, SensDetId const& rhs)
 {
     return std::make_tuple(lhs.physvol_id, lhs.copy_number)

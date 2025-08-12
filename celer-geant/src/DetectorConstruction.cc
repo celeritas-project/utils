@@ -6,14 +6,8 @@
 //---------------------------------------------------------------------------//
 #include "DetectorConstruction.hh"
 
-#include <G4Box.hh>
 #include <G4LogicalVolume.hh>
-#include <G4Material.hh>
-#include <G4NistManager.hh>
-#include <G4PVPlacement.hh>
 #include <G4SDManager.hh>
-#include <G4SystemOfUnits.hh>
-#include <G4VPhysicalVolume.hh>
 #include <corecel/Assert.hh>
 #include <corecel/io/Logger.hh>
 
@@ -82,8 +76,7 @@ void DetectorConstruction::set_sd()
             // Add sensitive detector
             std::string sd_name = element.value;
             auto this_sd = std::make_unique<SensitiveDetector>(sd_name);
-            CELER_LOG(status)
-                << "Insert " << sd_name << " as sensitive detector";
+            CELER_LOG(info) << "Insert " << sd_name << " as sensitive detector";
             sd_manager->AddNewDetector(this_sd.get());
             G4VUserDetectorConstruction::SetSensitiveDetector(
                 log_vol->GetName(), this_sd.release());

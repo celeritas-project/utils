@@ -6,7 +6,8 @@
 //---------------------------------------------------------------------------//
 #include "JsonReader.hh"
 
-#include "corecel/Assert.hh"
+#include <fstream>
+#include <corecel/Assert.hh>
 
 //---------------------------------------------------------------------------//
 //! Singleton declaration.
@@ -21,6 +22,10 @@ void JsonReader::Construct(char const* json_filename)
     if (!json_reader_singleton)
     {
         json_reader_singleton = new JsonReader(json_filename);
+    }
+    else
+    {
+        CELER_VALIDATE(false, << "JsonReader already constructed");
     }
 }
 

@@ -6,7 +6,6 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include <map>
 #include <string>
 #include <G4GDMLParser.hh>
 #include <G4VUserDetectorConstruction.hh>

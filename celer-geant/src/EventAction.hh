@@ -6,8 +6,8 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include <memory>
 #include <G4UserEventAction.hh>
+#include <stddef.h>
 
 //---------------------------------------------------------------------------//
 /*!
@@ -16,11 +16,15 @@
 class EventAction final : public G4UserEventAction
 {
   public:
-    EventAction() = default;
+    // Construct and define progress
+    EventAction();
 
     // Begin of event user-action
     void BeginOfEventAction(G4Event const* event) final;
 
     // End of event user-action
     void EndOfEventAction(G4Event const*) final {};
+
+  private:
+    size_t log_progress_;
 };

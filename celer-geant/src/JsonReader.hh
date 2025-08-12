@@ -6,14 +6,13 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include <fstream>
 #include <nlohmann/json.hpp>
 
 //---------------------------------------------------------------------------//
 /*!
  * Singleton \e nlohmann/json parser.
- * Use \c JsonReader::construct("input.json") to construct the singleton, and
- * \c JsonReader::instance() to access it from any class.
+ * Use \c JsonReader::Construct("input.json") to construct the singleton, and
+ * \c JsonReader::Instance() to access it from any class.
  */
 class JsonReader
 {

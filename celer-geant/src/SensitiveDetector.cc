@@ -37,8 +37,12 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     auto& hists = RootIO::Instance()->Histograms().Find(
         phys_vol->GetInstanceID(), phys_vol->GetCopyNo());
 
-    hists.energy.Fill(step->GetTotalEnergyDeposit());
-    hists.time.Fill(pre->GetGlobalTime());
+#define SD_FILL(MEMBER, VALUE) hists.MEMBER.Fill(VALUE)
+
+    SD_FILL(energy, step->GetTotalEnergyDeposit());
+    SD_FILL(time, pre->GetGlobalTime());
+
+#undef SD_FILL
 
     return true;
 }

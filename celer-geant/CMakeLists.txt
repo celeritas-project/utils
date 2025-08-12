@@ -2,7 +2,7 @@
 # Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
-# Celeritas-Geant4 offload application for physics validation 
+# Celeritas-Geant4 offload application for physics validation
 #-----------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.18)
@@ -18,7 +18,7 @@ endif()
 #-----------------------------------------------------------------------------#
 # Find packages
 find_package(Celeritas 0.6 REQUIRED)
-find_package(Geant4 REQUIRED gdml) # TODO: check minimum version
+find_package(Geant4 REQUIRED gdml multithreaded) # TODO: check minimum version
 find_package(ROOT REQUIRED)
 find_package(HepMC3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
@@ -26,8 +26,7 @@ find_package(nlohmann_json REQUIRED)
 if(NOT Celeritas_FOUND)
   message(FATAL_ERROR
     "No Celeritas installation found.\n"
-    "Export Celeritas_ROOT=/path/to/celeritas/install or use CMAKE_INSTALL_PREFIX"
-  )
+    "Export Celeritas_ROOT=/path/to/celeritas/install or use CMAKE_INSTALL_PREFIX")
 endif()
 
 if(NOT CELERITAS_USE_Geant4)
@@ -59,7 +58,6 @@ target_include_directories(celer-geant PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
 
-# Use special linking macros to support CUDA+VecGeom
 celeritas_target_link_libraries(celer-geant
   Celeritas::celeritas
   Celeritas::G4
