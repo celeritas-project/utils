@@ -57,6 +57,8 @@ void DetectorConstruction::ConstructSDandField()
 //---------------------------------------------------------------------------//
 /*!
  * Set up sensitive detectors.
+ *
+ * \note We can use a physical volume store to force all volumes to be scored.
  */
 void DetectorConstruction::set_sd()
 {
@@ -80,6 +82,8 @@ void DetectorConstruction::set_sd()
             // Add sensitive detector
             std::string sd_name = element.value;
             auto this_sd = std::make_unique<SensitiveDetector>(sd_name);
+            CELER_LOG(status)
+                << "Insert " << sd_name << " as sensitive detector";
             sd_manager->AddNewDetector(this_sd.get());
             G4VUserDetectorConstruction::SetSensitiveDetector(
                 log_vol->GetName(), this_sd.release());

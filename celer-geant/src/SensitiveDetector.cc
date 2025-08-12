@@ -6,8 +6,10 @@
 //---------------------------------------------------------------------------//
 #include "SensitiveDetector.hh"
 
-#include <RootIO.hh>
+#include <corecel/Assert.hh>
 #include <corecel/io/Logger.hh>
+
+#include "RootIO.hh"
 
 //---------------------------------------------------------------------------//
 /*!
@@ -24,6 +26,19 @@ SensitiveDetector::SensitiveDetector(std::string sd_name)
  */
 G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 {
-    RootIO::Instance()->Histograms().energy.Fill(step->GetTotalEnergyDeposit());
+    CELER_EXPECT(step);
+    auto pre = step->GetPreStepPoint();
+    CELER_ASSERT(pre);
+    auto pre_th = pre->GetTouchableHandle();
+    CELER_ASSERT(pre_th);
+    auto phys_vol = pre_th->GetVolume();
+    CELER_ASSERT(phys_vol);
+
+    auto& hists = RootIO::Instance()->Histograms().Find(
+        phys_vol->GetInstanceID(), phys_vol->GetCopyNo());
+
+    hists.energy.Fill(step->GetTotalEnergyDeposit());
+    hists.time.Fill(pre->GetGlobalTime());
+
     return true;
 }

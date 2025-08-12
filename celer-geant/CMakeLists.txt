@@ -41,6 +41,7 @@ set(SOURCES
   src/ActionInitialization.cc
   src/DetectorConstruction.cc
   src/EventAction.cc
+  src/HistogramStore.cc
   src/JsonReader.cc
   src/MakeCelerOptions.cc
   src/PrimaryGeneratorAction.cc

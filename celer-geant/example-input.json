@@ -1,3 +1,8 @@
 {
-    "geometry": "/Users/4s2/celeritas-project/celeritas/app/data/simple-cms.gdml"
+    "geometry": "/Users/4s2/celeritas-project/celeritas/app/data/simple-cms.gdml",
+    "mctruth": "/Users/4s2/celeritas-project/utils/celer-geant/build/test.root",
+    "run": {
+        "num_threads": 1,
+        "hepmc3": ""
+    }
 }

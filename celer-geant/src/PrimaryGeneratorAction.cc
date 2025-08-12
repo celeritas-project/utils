@@ -23,7 +23,9 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 
 //---------------------------------------------------------------------------//
 /*!
- * Generate a simple primary. Replace by HepMC3 reader.
+ * Generate a simple primary.
+ *
+ * TODO: Replace by HepMC3 reader.
  */
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {

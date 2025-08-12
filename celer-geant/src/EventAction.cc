@@ -7,12 +7,7 @@
 #include "EventAction.hh"
 
 #include <G4Event.hh>
-#include <G4SystemOfUnits.hh>
-#include <accel/TrackingManagerIntegration.hh>
-#include <corecel/Assert.hh>
 #include <corecel/io/Logger.hh>
-
-#include "RootIO.hh"
 
 //---------------------------------------------------------------------------//
 /*!

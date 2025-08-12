@@ -26,6 +26,13 @@ void RunAction::BeginOfRunAction(G4Run const* run)
 {
     CELER_LOG_LOCAL(status) << "Begin of run action";
     celeritas::TrackingManagerIntegration::Instance().BeginOfRunAction(run);
+
+    if (G4Threading::IsWorkerThread())
+    {
+        // Construct thread-local ROOT I/O
+        // Initialization at RunAction ensures geometry/SD data is available
+        RootIO::Instance();
+    }
 }
 
 //---------------------------------------------------------------------------//

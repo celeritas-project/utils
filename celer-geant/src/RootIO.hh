@@ -14,8 +14,7 @@
 #include <TTree.h>
 #include <celeritas/ext/RootFileManager.hh>
 
-#include "MCHist.hh"
-#include "MCTruth.hh"
+#include "HistogramStore.hh"
 
 //---------------------------------------------------------------------------//
 /*!
@@ -39,22 +38,19 @@ class RootIO
     TFile& File() { return *file_; }
 
     // Get reference to thread-local TTree
-    TTree& Tree() { return *tree_; }
+    // TTree& Tree() { return *tree_; }
 
     // Get reference to thread-local Histogram data
-    MCHist& Histograms() { return hist_; }
+    HistogramStore& Histograms() { return hist_store_; }
 
   private:
     //// DATA ////
 
     TFile* file_;
-    TTree* tree_;
-    // MC truth TTree data
-    Step step_;
-    Hit hit_;
+    // TTree* tree_;
 
     // Histogram data
-    MCHist hist_;
+    HistogramStore hist_store_;
 
   private:
     //// HELPER FUNCTIONS ////

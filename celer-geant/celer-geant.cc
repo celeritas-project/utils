@@ -13,6 +13,7 @@
 #include <accel/TrackingManagerConstructor.hh>
 #include <accel/TrackingManagerIntegration.hh>
 #include <celeritas/ext/EmPhysicsList.hh>
+#include <corecel/io/Logger.hh>
 
 #include "ActionInitialization.hh"
 #include "DetectorConstruction.hh"
@@ -34,13 +35,25 @@ int main(int argc, char* argv[])
 
     // Load input file
     JsonReader::Construct(argv[1]);
+    auto const& json = JsonReader::Instance();
+    auto const num_threads = json.at("run").at("num_threads").get<size_t>();
+
+    CELER_VALIDATE(num_threads > 0, << "Number of threads must be positive");
+
+    auto const num_cores = G4Threading::G4GetNumberOfCores();
+    if (2 * num_cores < num_threads)
+    {
+        CELER_LOG(warning)
+            << "Number of threads (" << num_threads
+            << ") is larger than the number of available cores (" << num_cores
+            << "), assuming hyperthreading";
+    }
 
     std::unique_ptr<G4RunManager> run_manager;
     run_manager.reset(
         G4RunManagerFactory::CreateRunManager(G4RunManagerType::Default));
 
-    // \todo: set number of threads from input data
-    run_manager->SetNumberOfThreads(1);
+    run_manager->SetNumberOfThreads(num_threads);
 
     // Initialize Celeritas
     auto& tmi = celeritas::TrackingManagerIntegration::Instance();
@@ -53,8 +66,8 @@ int main(int argc, char* argv[])
     run_manager->SetUserInitialization(physics.release());
 
     // Initialize geometry and actions
-    run_manager->SetUserInitialization(new DetectorConstruction(
-        JsonReader::Instance().at("geometry").get<std::string>()));
+    run_manager->SetUserInitialization(
+        new DetectorConstruction(json.at("geometry").get<std::string>()));
     run_manager->SetUserInitialization(new ActionInitialization());
 
     // Run events

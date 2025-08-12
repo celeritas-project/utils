@@ -40,7 +40,4 @@ void ActionInitialization::Build() const
     this->SetUserAction(new RunAction());
     this->SetUserAction(new PrimaryGeneratorAction());
     this->SetUserAction(new EventAction());
-
-    // Construct thread-local ROOT I/O
-    RootIO::Instance();
 }
