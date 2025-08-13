@@ -10,17 +10,17 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * Initialize Celeritas offloading interface.
+ * Manage Celeritas offloading interface at beginning/end of run.
  */
 class RunAction : public G4UserRunAction
 {
   public:
     // Construct empty
-    RunAction();
+    RunAction() = default;
 
-    // Initialize Celeritas offloading interface
+    // Initialize I/O and Celeritas offloading interface
     void BeginOfRunAction(G4Run const* run) final;
 
-    // Finalize Celeritas offloading interface
+    // Finalize I/O and Celeritas offloading interface
     void EndOfRunAction(G4Run const* run) final;
 };

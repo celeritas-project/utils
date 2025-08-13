@@ -7,6 +7,8 @@
 //---------------------------------------------------------------------------//
 #include <iostream>
 #include <memory>
+#include <G4Electron.hh>
+#include <G4Positron.hh>
 #include <G4RunManagerFactory.hh>
 #include <G4Threading.hh>
 #include <G4UImanager.hh>
@@ -98,9 +100,19 @@ int main(int argc, char* argv[])
     tmi.SetOptions(celeritas::MakeCelerOptions());
 
     // Initialize physics with Celeritas offload
-    celeritas::GeantPhysicsOptions phys_opts;
+    auto phys_opts = celeritas::GeantPhysicsOptions::deactivated();
+    phys_opts.ionization = true;
+
+    // Load a subset of particles
+    G4ParticleDefinition* const offload_particles[] = {
+        G4Electron::Definition(),
+        G4Positron::Definition(),
+    };
+    auto tmc = std::make_unique<celeritas::TrackingManagerConstructor>(&tmi);
+    tmc->SetOffloadParticles(offload_particles);
+
     auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
-    physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
+    physics->RegisterPhysics(tmc.release());
     run_manager->SetUserInitialization(physics.release());
 
     // Initialize geometry and actions

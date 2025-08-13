@@ -16,12 +16,6 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct empty.
- */
-RunAction::RunAction() : G4UserRunAction() {}
-
-//---------------------------------------------------------------------------//
-/*!
  * Initialize master and worker threads in Celeritas.
  */
 void RunAction::BeginOfRunAction(G4Run const* run)
@@ -39,19 +33,26 @@ void RunAction::BeginOfRunAction(G4Run const* run)
 
 //---------------------------------------------------------------------------//
 /*!
- * Clear local data and return Celeritas to an invalid state.
+ * Write thread-local ROOT file and return Celeritas to an invalid state.
  */
 void RunAction::EndOfRunAction(G4Run const* run)
 {
+    using Mode = celeritas::OffloadMode;
+
     auto& tmi = celeritas::TrackingManagerIntegration::Instance();
     if (G4Threading::IsWorkerThread())
     {
-        // Write diagnostics to ROOT file and close it
-        std::ostringstream diagnostics;
-        tmi.GetParams().output_reg()->output(&diagnostics);
-        auto rio = RootIO::Instance();
-        rio->StoreDiagnostics(diagnostics.str());
+        auto* rio = RootIO::Instance();
+        if (tmi.GetMode() == Mode::enabled)
+        {
+            // Write Celeritas diagnostics to ROOT file
+            std::ostringstream diagnostics;
+            tmi.GetParams().output_reg()->output(&diagnostics);
+            rio->StoreDiagnostics(diagnostics.str());
+        }
+        // Write and close ROOT output
         rio->Finalize();
     }
+    // Return Celeritas to an invalid state
     tmi.EndOfRunAction(run);
 }

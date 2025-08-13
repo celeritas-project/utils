@@ -25,7 +25,7 @@ EventAction::EventAction() : G4UserEventAction()
 
 //---------------------------------------------------------------------------//
 /*!
- * Thread-local begin of event action.
+ * Thread-local begin of event action: log event start
  */
 void EventAction::BeginOfEventAction(G4Event const* event)
 {
