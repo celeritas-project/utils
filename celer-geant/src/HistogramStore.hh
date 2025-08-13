@@ -8,31 +8,58 @@
 
 #include <string>
 #include <TH1D.h>
+#include <corecel/Assert.hh>
+
+#include "JsonReader.hh"
 
 //---------------------------------------------------------------------------//
 /*!
- * Histogram list.
+ * Histogram storage for sensitive detectors.
  */
 struct SDHistograms
 {
-    std::string sd_name;
+    std::string sd_name;  //!< Sensitive detector name
+
+    //!@{
+    //! Histograms
     TH1D energy;
     TH1D time;
+    //!@}
 
-    // Initialize histograms TODO: with input data
-    static SDHistograms Initialize(std::string name)
+    //! Initialize histograms using the SD name and JSON input data
+    static SDHistograms Initialize(std::string sd_name)
     {
+        struct HistDef
+        {
+            size_t nbins;
+            int min;
+            int max;
+        };
+        auto const& j = JsonReader::Instance().at("histograms");
+        auto histogram_def = [&](std::string name) -> HistDef {
+            auto jx = j.at(name);
+            HistDef h;
+            h.nbins = jx.at("num_bins").get<size_t>();
+            h.min = jx.at("min").get<int>();
+            h.max = jx.at("max").get<int>();
+            return h;
+        };
+
+#define SDH_INIT_TH1D(HIST)                                                 \
+    {                                                                       \
+        std::string hname = sd_name + "_" + #HIST;                          \
+        auto const hd = histogram_def(#HIST);                               \
+        result.HIST                                                         \
+            = TH1D(hname.c_str(), hname.c_str(), hd.nbins, hd.min, hd.max); \
+    }
+
         SDHistograms result;
-        result.sd_name = name;
-
-        std::string energy_name = name + "_energy";
-        result.energy
-            = TH1D(energy_name.c_str(), energy_name.c_str(), 100, 0, 5);
-
-        std::string time_name = name + "_time";
-        result.time
-            = TH1D(time_name.c_str(), time_name.c_str(), 100, -100, 100);
+        result.sd_name = sd_name;
+        SDH_INIT_TH1D(energy);
+        SDH_INIT_TH1D(time);
         return result;
+
+#undef SDH_INIT_TH1D
     }
 };
 
@@ -57,7 +84,11 @@ inline bool operator<(SensDetId const& lhs, SensDetId const& rhs)
 
 //---------------------------------------------------------------------------//
 /*!
- * Store and initialize histogram for faster MC truth output results.
+ * Histogram storage manager class.
+ *
+ * This class stores a set of histograms for every sensitive detector in the
+ * geometry and allows an easy way to access them using the physical volume
+ * instance ID and copy number.
  */
 class HistogramStore
 {
@@ -71,7 +102,7 @@ class HistogramStore
     // Construct empty
     HistogramStore() = default;
 
-    // Insert new block of histograms into memory
+    // Map and initialize histograms for a sensitive detector
     void InsertSensDet(PhysVolId pv_id, CopyNumber copy_num, std::string name);
 
     // Get histogram data for a given physical volume ID and copy number

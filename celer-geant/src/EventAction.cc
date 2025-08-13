@@ -18,7 +18,7 @@
 EventAction::EventAction() : G4UserEventAction()
 {
     auto json = JsonReader::Instance();
-    log_progress_ = (json.count("log_progress") != 0)
+    log_progress_ = (json.contains("log_progress"))
                         ? json.at("log_progress").get<size_t>()
                         : 1;
 }

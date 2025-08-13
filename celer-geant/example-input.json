@@ -1,6 +1,19 @@
 {
     "geometry": "geometry.gdml",
-    "mctruth": "output.root",
+    "root_output": "output.root",
     "num_threads": 1,
-    "log_progress": 5
+    "log_progress": 1,
+    "num_events": 1,
+    "histograms": {
+        "energy": {
+            "num_bins": 100,
+            "min": 0,
+            "max": 5
+        },
+        "time": {
+            "num_bins": 100,
+            "min": -10,
+            "max": 10
+        }
+    }
 }

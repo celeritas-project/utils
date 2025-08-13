@@ -10,7 +10,8 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * Add sensitive detector id to map. This indexes the vector of histograms.
+ * Add physical volume ID and copy number to the map and initialize histograms
+ * associated to it.
  */
 void HistogramStore::InsertSensDet(PhysVolId pid,
                                    CopyNumber cid,

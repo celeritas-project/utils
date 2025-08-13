@@ -6,12 +6,12 @@
 //---------------------------------------------------------------------------//
 #include "RootIO.hh"
 
-#include <mutex>
 #include <G4LogicalVolume.hh>
 #include <G4PhysicalVolumeStore.hh>
 #include <G4Threading.hh>
 #include <G4VSensitiveDetector.hh>
 #include <TROOT.h>
+#include <TTree.h>
 #include <corecel/Assert.hh>
 #include <corecel/io/Logger.hh>
 
@@ -23,7 +23,7 @@
  */
 RootIO* RootIO::Instance()
 {
-    static G4ThreadLocal RootIO instance;
+    static thread_local RootIO instance;
     return &instance;
 }
 
@@ -33,12 +33,12 @@ RootIO* RootIO::Instance()
  */
 RootIO::RootIO()
 {
-    ROOT::EnableThreadSafety();
-
     CELER_VALIDATE(G4Threading::IsWorkerThread(),
                    << "Must be constructed on worker thread");
 
-    auto filename = JsonReader::Instance().at("mctruth").get<std::string>();
+    ROOT::EnableThreadSafety();
+    auto json = JsonReader::Instance();
+    auto filename = json.at("root_output").get<std::string>();
     CELER_VALIDATE(!filename.empty(), << "ROOT filename must be non-empty");
 
     // Append thread ID to filename
@@ -50,7 +50,7 @@ RootIO::RootIO()
     CELER_LOG_LOCAL(status) << "Open file " << thread_filename;
     file_ = TFile::Open(thread_filename.c_str(), "recreate");
     CELER_VALIDATE(!file_->IsZombie(),
-                   << "Could not open ROOT file '" << thread_filename << "'");
+                   << "ROOT file \"" << thread_filename << "\" is zombie");
 
     // Map physical volumes to be scored
     auto const& physvol_store = *G4PhysicalVolumeStore::GetInstance();
@@ -81,29 +81,41 @@ RootIO::RootIO()
 
 //---------------------------------------------------------------------------//
 /*!
- * Destruct by writing data to thread-local ROOT file and close it.
+ * Write Celeritas Output Registry diagnostics as a string during
+ * \c RunAction::EndOfRunAction:: .
+ *
+ * \note Since this is on a worker thread the diagnostics has no record of the
+ * total simulation runtime.
  */
-RootIO::~RootIO()
+void RootIO::StoreDiagnostics(std::string diagnostics)
 {
-#define RIO_HIST_WRITE(MEMBER) hist.MEMBER.Write()
+    char const* name = "diagnostics";
+    TTree tree(name, name, this->SplitLevel(), nullptr);
+    tree.Branch(name, &diagnostics);
+    tree.Fill();
+    tree.Write();
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Finalize I/O by writing data to thread-local ROOT file and close it.
+ */
+void RootIO::Finalize()
+{
+#define RIO_HIST_WRITE(MEMBER) hist.MEMBER.Write();
 
     for (auto& [ids, hist] : hist_store_.Map())
     {
         std::string dir_name = "histograms/" + hist.sd_name;
+
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());
         hist_sd_dir->cd();
 
         RIO_HIST_WRITE(energy);
         RIO_HIST_WRITE(time);
     }
+    CELER_LOG_LOCAL(info) << "Wrote Geant4 ROOT output to \""
+                          << file_->GetName() << "\"";
+
     file_->Close();
-
-    {
-        static std::mutex mutex_log;
-        std::lock_guard<std::mutex> scoped_lock{mutex_log};
-        CELER_LOG_LOCAL(info)
-            << "Wrote Geant4 ROOT output to \"" << file_->GetName() << "\"";
-    }
-
-#undef RIO_HIST_WRITE
 }

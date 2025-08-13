@@ -8,7 +8,9 @@
 
 #include <G4Threading.hh>
 #include <accel/TrackingManagerIntegration.hh>
+#include <celeritas/global/CoreParams.hh>
 #include <corecel/io/Logger.hh>
+#include <corecel/io/OutputRegistry.hh>
 
 #include "RootIO.hh"
 
@@ -41,5 +43,15 @@ void RunAction::BeginOfRunAction(G4Run const* run)
  */
 void RunAction::EndOfRunAction(G4Run const* run)
 {
-    celeritas::TrackingManagerIntegration::Instance().EndOfRunAction(run);
+    auto& tmi = celeritas::TrackingManagerIntegration::Instance();
+    if (G4Threading::IsWorkerThread())
+    {
+        // Write diagnostics to ROOT file and close it
+        std::ostringstream diagnostics;
+        tmi.GetParams().output_reg()->output(&diagnostics);
+        auto rio = RootIO::Instance();
+        rio->StoreDiagnostics(diagnostics.str());
+        rio->Finalize();
+    }
+    tmi.EndOfRunAction(run);
 }

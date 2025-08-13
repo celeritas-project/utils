@@ -6,7 +6,6 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include <G4ThreadLocalSingleton.hh>
 #include <TFile.h>
 
 #include "HistogramStore.hh"
@@ -17,8 +16,6 @@
  */
 class RootIO
 {
-    friend class G4ThreadLocalSingleton<RootIO>;
-
   public:
     // Return a thread-local singleton instance
     static RootIO* Instance();
@@ -28,6 +25,12 @@ class RootIO
 
     // Get reference to thread-local Histogram data
     HistogramStore& Histograms() { return hist_store_; }
+
+    // Store OutputRegistry diagnostics
+    void StoreDiagnostics(std::string diagnostics);
+
+    // Write data to ROOT file and close it
+    void Finalize();
 
   private:
     //// DATA ////
@@ -40,6 +43,6 @@ class RootIO
     // Construct with filename on worker thread
     RootIO();
 
-    // Destruct by writing histograms/TTree and file to disk
-    ~RootIO();
+    // ROOT TTree split level
+    static constexpr short int SplitLevel() { return 99; }
 };

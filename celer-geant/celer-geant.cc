@@ -19,9 +19,55 @@
 #include "DetectorConstruction.hh"
 #include "JsonReader.hh"
 #include "MakeCelerOptions.hh"
+#include "RootIO.hh"
 
 //---------------------------------------------------------------------------//
 /*!
+ * Validate minimal set of JSON input keys.
+ */
+void validate_input()
+{
+#define VALIDATE_MAIN_KEY(KEY) \
+    CELER_VALIDATE(j.contains(#KEY), << "\"" << #KEY << "\" key missing");
+
+#define VALIDATE_HIST_KEY(HIST)        \
+    CELER_VALIDATE(jh.contains(#HIST), \
+                   << "Histogram \"" << #HIST << "\" missing");
+
+#define VALIDATE_HIST_DEF_KEY(HIST, KEY)                                    \
+    CELER_VALIDATE(jh.at(#HIST).contains(#KEY),                             \
+                   << "Missing \"" << #KEY << "\" in histogram \"" << #HIST \
+                   << "\"")
+
+#define VALIDATE_HIST_DEF(HIST)            \
+    VALIDATE_HIST_KEY(HIST)                \
+    VALIDATE_HIST_DEF_KEY(HIST, num_bins); \
+    VALIDATE_HIST_DEF_KEY(HIST, min);      \
+    VALIDATE_HIST_DEF_KEY(HIST, max);
+
+    // Validate all main JSON input terms
+    auto const& j = JsonReader::Instance();
+    VALIDATE_MAIN_KEY(geometry);
+    VALIDATE_MAIN_KEY(root_output);
+    VALIDATE_MAIN_KEY(num_threads);
+    VALIDATE_MAIN_KEY(num_events);
+    VALIDATE_MAIN_KEY(histograms);
+
+    // Validate histogram information
+    auto const& jh = j.at("histograms");
+    VALIDATE_HIST_DEF(energy);
+    VALIDATE_HIST_DEF(time);
+
+#undef VALIDATE_MAIN_KEY
+#undef VALIDATE_HIST_KEY
+#undef VALIDATE_HIST_DEF_KEY
+#undef VALIDATE_HIST_DEF
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Run a Celeritas-Geant4 execution run for physics validation.
+ *
  * See README for details.
  */
 int main(int argc, char* argv[])
@@ -33,21 +79,13 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Load input file
+    // Load and verify input file
     JsonReader::Construct(argv[1]);
+    validate_input();
+
     auto const& json = JsonReader::Instance();
     auto const num_threads = json.at("num_threads").get<size_t>();
-
     CELER_VALIDATE(num_threads > 0, << "Number of threads must be positive");
-
-    auto const num_cores = G4Threading::G4GetNumberOfCores();
-    if (2 * num_cores < num_threads)
-    {
-        CELER_LOG(warning)
-            << "Number of threads (" << num_threads
-            << ") is larger than the number of available cores (" << num_cores
-            << "), assuming hyperthreading";
-    }
 
     std::unique_ptr<G4RunManager> run_manager;
     run_manager.reset(
@@ -71,8 +109,11 @@ int main(int argc, char* argv[])
     run_manager->SetUserInitialization(new ActionInitialization());
 
     // Run events
+    auto const num_events = json.at("num_events").get<size_t>();
+    CELER_VALIDATE(num_events, << "Number of events must be positive");
+
     run_manager->Initialize();
-    run_manager->BeamOn(20);
+    run_manager->BeamOn(num_events);
 
     return EXIT_SUCCESS;
 }
