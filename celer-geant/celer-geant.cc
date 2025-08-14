@@ -39,7 +39,7 @@ void validate_input()
 #define VALIDATE_HIST_DEF_KEY(HIST, KEY)                                    \
     CELER_VALIDATE(jh.at(#HIST).contains(#KEY),                             \
                    << "Missing \"" << #KEY << "\" in histogram \"" << #HIST \
-                   << "\"")
+                   << "\"");
 
 #define VALIDATE_HIST_DEF(HIST)            \
     VALIDATE_HIST_KEY(HIST)                \

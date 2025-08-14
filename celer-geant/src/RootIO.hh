@@ -17,19 +17,19 @@
 class RootIO
 {
   public:
-    // Return a thread-local singleton instance
+    //! Return a thread-local singleton instance
     static RootIO* Instance();
 
-    // Get reference to thread-local TFile
+    //! Get reference to thread-local TFile
     TFile& File() { return *file_; }
 
-    // Get reference to thread-local Histogram data
+    //! Get reference to thread-local Histogram data
     HistogramStore& Histograms() { return hist_store_; }
 
-    // Store OutputRegistry diagnostics
+    //! Store OutputRegistry diagnostics
     void StoreDiagnostics(std::string diagnostics);
 
-    // Write data to ROOT file and close it
+    //! Write data to ROOT file and close it
     void Finalize();
 
   private:

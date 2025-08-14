@@ -6,19 +6,9 @@
 //---------------------------------------------------------------------------//
 #include "ActionInitialization.hh"
 
-#include <corecel/io/Logger.hh>
-
 #include "EventAction.hh"
-#include "G4Threading.hh"
 #include "PrimaryGeneratorAction.hh"
-#include "RootIO.hh"
 #include "RunAction.hh"
-
-//---------------------------------------------------------------------------//
-/*!
- * Construct empty.
- */
-ActionInitialization::ActionInitialization() : G4VUserActionInitialization() {}
 
 //---------------------------------------------------------------------------//
 /*!

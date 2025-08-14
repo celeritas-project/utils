@@ -17,12 +17,12 @@
 class ActionInitialization final : public G4VUserActionInitialization
 {
   public:
-    // Construct empty
-    ActionInitialization();
+    //! Construct empty
+    ActionInitialization() = default;
 
-    // Master thread user-actions and Celeritas offload interface
+    //! Master thread user-actions and Celeritas offload interface
     void BuildForMaster() const final;
 
-    // Worker thread user-actions and Celeritas offload interface
+    //! Worker thread user-actions and Celeritas offload interface
     void Build() const final;
 };

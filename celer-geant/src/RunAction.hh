@@ -15,12 +15,12 @@
 class RunAction : public G4UserRunAction
 {
   public:
-    // Construct empty
+    //! Construct empty
     RunAction() = default;
 
-    // Initialize I/O and Celeritas offloading interface
+    //! Initialize I/O and Celeritas offloading interface
     void BeginOfRunAction(G4Run const* run) final;
 
-    // Finalize I/O and Celeritas offloading interface
+    //! Finalize I/O and Celeritas offloading interface
     void EndOfRunAction(G4Run const* run) final;
 };

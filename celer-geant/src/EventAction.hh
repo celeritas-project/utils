@@ -16,13 +16,13 @@
 class EventAction final : public G4UserEventAction
 {
   public:
-    // Construct and define progress logging
+    //! Construct and define progress logging
     EventAction();
 
-    // Begin of event user-action
+    //! Begin of event user-action
     void BeginOfEventAction(G4Event const* event) final;
 
-    // Null-op end of event user-action
+    //! Null-op end of event user-action
     void EndOfEventAction(G4Event const*) final {};
 
   private:

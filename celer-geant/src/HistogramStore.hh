@@ -99,16 +99,16 @@ class HistogramStore
     using CopyNumber = size_t;
     //!@}
 
-    // Construct empty
+    //! Construct empty
     HistogramStore() = default;
 
-    // Map and initialize histograms for a sensitive detector
+    //! Map and initialize histograms for a sensitive detector
     void InsertSensDet(PhysVolId pv_id, CopyNumber copy_num, std::string name);
 
-    // Get histogram data for a given physical volume ID and copy number
+    //! Get histogram data for a given physical volume ID and copy number
     SDHistograms& Find(PhysVolId pv_id, CopyNumber copy_num);
 
-    // Access full SD map
+    //! Access full SD map
     std::map<SensDetId, SDHistograms>& Map() { return sensdet_map_; }
 
   private:

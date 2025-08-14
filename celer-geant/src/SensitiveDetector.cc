@@ -18,6 +18,8 @@
 SensitiveDetector::SensitiveDetector(std::string sd_name)
     : G4VSensitiveDetector(sd_name)
 {
+    CELER_VALIDATE(!sd_name.empty(),
+                   << "must provide a valid sensitive detector name");
 }
 
 //---------------------------------------------------------------------------//
@@ -34,10 +36,12 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     auto phys_vol = pre_th->GetVolume();
     CELER_ASSERT(phys_vol);
 
-    auto& hists = RootIO::Instance()->Histograms().Find(
-        phys_vol->GetInstanceID(), phys_vol->GetCopyNo());
+    auto rio = RootIO::Instance();
+    CELER_ASSERT(rio);
+    auto hists = rio->Histograms().Find(phys_vol->GetInstanceID(),
+                                        phys_vol->GetCopyNo());
 
-#define SD_FILL(MEMBER, VALUE) hists.MEMBER.Fill(VALUE)
+#define SD_FILL(MEMBER, VALUE) hists.MEMBER.Fill(VALUE);
 
     SD_FILL(energy, step->GetTotalEnergyDeposit());
     SD_FILL(time, pre->GetGlobalTime());

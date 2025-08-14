@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include <G4Event.hh>
 #include <G4VUserPrimaryGeneratorAction.hh>
 
 //---------------------------------------------------------------------------//
@@ -15,9 +16,9 @@
 class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction
 {
   public:
-    // Construct empty
-    PrimaryGeneratorAction();
+    //! Construct empty
+    PrimaryGeneratorAction() = default;
 
-    // Place primaries in the event simulation
+    //! Place primaries in the event simulation
     void GeneratePrimaries(G4Event* event) final;
 };

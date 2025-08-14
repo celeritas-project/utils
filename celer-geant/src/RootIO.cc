@@ -116,6 +116,7 @@ void RootIO::Finalize()
     }
     CELER_LOG_LOCAL(info) << "Wrote Geant4 ROOT output to \""
                           << file_->GetName() << "\"";
-
     file_->Close();
+
+#undef RIO_HIST_WRITE
 }

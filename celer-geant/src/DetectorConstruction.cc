@@ -17,17 +17,17 @@
 /*!
  * Construct with filename.
  */
-DetectorConstruction::DetectorConstruction(std::string gdml_path)
+DetectorConstruction::DetectorConstruction(std::string gdml_filename)
     : G4VUserDetectorConstruction()
 {
-    CELER_VALIDATE(!gdml_path.empty(), << "GDML filename is empty");
+    CELER_VALIDATE(!gdml_filename.empty(), << "GDML filename is empty");
     parser_.SetStripFlag(false);
-    parser_.Read(gdml_path, false);
+    parser_.Read(gdml_filename, false);
 }
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct geometry.
+ * Construct world geometry.
  */
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
@@ -36,25 +36,26 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 //---------------------------------------------------------------------------//
 /*!
- * Thread-local function call to initialize sensitive detectors.
+ * Initialize sensitive detectors on all threads.
  */
 void DetectorConstruction::ConstructSDandField()
 {
     if (false /* field */)
     {
+        //! \todo Initialize field
         CELER_LOG(status) << "Initializing magnetic field";
     }
 
-    this->set_sd();
+    this->InitializeSensitiveDetectors();
 }
 
 //---------------------------------------------------------------------------//
 /*!
- * Set up sensitive detectors.
+ * Find and set sensitive detectors.
  *
- * \note We can use a physical volume store to force all volumes to be scored.
+ * \todo Use a physical volume store to force all volumes to be scored.
  */
-void DetectorConstruction::set_sd()
+void DetectorConstruction::InitializeSensitiveDetectors()
 {
     CELER_LOG(status) << "Initializing sensitive detectors";
     auto sd_manager = G4SDManager::GetSDMpointer();

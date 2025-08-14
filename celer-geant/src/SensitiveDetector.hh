@@ -18,9 +18,9 @@
 class SensitiveDetector : public G4VSensitiveDetector
 {
   public:
-    // Construct with SD name
+    //! Construct with SD name
     SensitiveDetector(std::string sd_name);
 
-    // Celeritas callback interface
+    //! Celeritas callback interface
     G4bool ProcessHits(G4Step* step, G4TouchableHistory*) final;
 };

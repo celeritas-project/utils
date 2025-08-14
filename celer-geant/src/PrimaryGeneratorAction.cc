@@ -9,30 +9,23 @@
 #include <G4ParticleGun.hh>
 #include <G4ParticleTable.hh>
 #include <G4SystemOfUnits.hh>
+#include <corecel/Assert.hh>
 
 #include "DetectorConstruction.hh"
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct empty.
- */
-PrimaryGeneratorAction::PrimaryGeneratorAction()
-    : G4VUserPrimaryGeneratorAction()
-{
-}
-
-//---------------------------------------------------------------------------//
-/*!
- * Generate a simple primary.
- *
- * TODO: Replace by HepMC3 reader.
+ * Generate primaries.
  */
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
+    // CELER_EXPECT(event);
+    // CELER_EXPECT(event->GetEventID() > 0);
+
     G4ParticleGun particle_gun;
     particle_gun.SetParticleDefinition(
         G4ParticleTable::GetParticleTable()->FindParticle(11));
-    particle_gun.SetParticleEnergy(5 * GeV);
+    particle_gun.SetParticleEnergy(10 * MeV);
     particle_gun.SetParticlePosition(G4ThreeVector());  // Origin
     particle_gun.SetParticleMomentumDirection(G4ThreeVector(1, 0, 0));  // +x
     particle_gun.GeneratePrimaryVertex(event);
