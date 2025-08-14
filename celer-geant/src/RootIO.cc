@@ -17,6 +17,21 @@
 
 #include "JsonReader.hh"
 
+namespace
+{
+//---------------------------------------------------------------------------//
+/*!
+ * Ensure ROOT thread-safety before construction.
+ *
+ * \c ROOT::EnableThreadSafety() must be triggered before the thread starts.
+ */
+auto enable_root_thread_safety = []() -> int {
+    ROOT::EnableThreadSafety();
+    return 0;
+}();
+//---------------------------------------------------------------------------//
+}  // namespace
+
 //---------------------------------------------------------------------------//
 /*!
  * Return the static thread local singleton instance.
@@ -36,7 +51,6 @@ RootIO::RootIO()
     CELER_VALIDATE(G4Threading::IsWorkerThread(),
                    << "Must be constructed on worker thread");
 
-    ROOT::EnableThreadSafety();
     auto json = JsonReader::Instance();
     auto filename = json.at("root_output").get<std::string>();
     CELER_VALIDATE(!filename.empty(), << "ROOT filename must be non-empty");
@@ -107,7 +121,6 @@ void RootIO::Finalize()
     for (auto& [ids, hist] : hist_store_.Map())
     {
         std::string dir_name = "histograms/" + hist.sd_name;
-
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());
         hist_sd_dir->cd();
 

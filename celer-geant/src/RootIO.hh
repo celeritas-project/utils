@@ -20,9 +20,6 @@ class RootIO
     //! Return a thread-local singleton instance
     static RootIO* Instance();
 
-    //! Get reference to thread-local TFile
-    TFile& File() { return *file_; }
-
     //! Get reference to thread-local Histogram data
     HistogramStore& Histograms() { return hist_store_; }
 
@@ -40,7 +37,7 @@ class RootIO
 
     //// HELPER FUNCTIONS ////
 
-    // Construct with filename on worker thread
+    // Construct with JSON input filename on worker thread
     RootIO();
 
     // ROOT TTree split level
