@@ -19,3 +19,12 @@ $ cmake ..
 $ make
 $ ./celer-geant input.json
 ```
+
+Adding new histograms
+---------------------
+
+The addition of any new histogram is straightforward:
+- Expand JSON with new histogram information
+- Add histogram to `SDHistograms` and initialize it in `SDHistograms::Initialize`
+- Fill histogram in `SensitiveDetector::ProcessHits`
+- Write it to disk during `RootIO::Finalize` using `RIO_HIST_WRITE`

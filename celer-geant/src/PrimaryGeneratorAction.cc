@@ -12,6 +12,7 @@
 #include <corecel/Assert.hh>
 
 #include "DetectorConstruction.hh"
+#include "JsonReader.hh"
 
 //---------------------------------------------------------------------------//
 /*!
@@ -19,14 +20,23 @@
  */
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
-    // CELER_EXPECT(event);
-    // CELER_EXPECT(event->GetEventID() > 0);
+    CELER_EXPECT(event);
+    auto pg = JsonReader::Instance().at("particle_gun");
+    auto const pdg = pg.at("pdg").get<int>();
+    auto const energy = pg.at("energy").get<double>();
+    G4ThreeVector vertex(pg.at("vertex")[0].get<double>(),
+                         pg.at("vertex")[1].get<double>(),
+                         pg.at("vertex")[2].get<double>());
+    vertex *= cm;  // Convert to cm
+    G4ThreeVector direction(pg.at("direction")[0].get<double>(),
+                            pg.at("direction")[1].get<double>(),
+                            pg.at("direction")[2].get<double>());
 
     G4ParticleGun particle_gun;
     particle_gun.SetParticleDefinition(
-        G4ParticleTable::GetParticleTable()->FindParticle(11));
-    particle_gun.SetParticleEnergy(10 * MeV);
-    particle_gun.SetParticlePosition(G4ThreeVector());  // Origin
-    particle_gun.SetParticleMomentumDirection(G4ThreeVector(1, 0, 0));  // +x
+        G4ParticleTable::GetParticleTable()->FindParticle(pdg));
+    particle_gun.SetParticleEnergy(energy);
+    particle_gun.SetParticlePosition(vertex);
+    particle_gun.SetParticleMomentumDirection(direction);
     particle_gun.GeneratePrimaryVertex(event);
 }

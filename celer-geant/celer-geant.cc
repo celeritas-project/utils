@@ -52,7 +52,6 @@ void validate_input()
     VALIDATE_MAIN_KEY(geometry);
     VALIDATE_MAIN_KEY(root_output);
     VALIDATE_MAIN_KEY(num_threads);
-    VALIDATE_MAIN_KEY(num_events);
     VALIDATE_MAIN_KEY(histograms);
 
     // Validate histogram information
@@ -97,22 +96,15 @@ int main(int argc, char* argv[])
 
     // Initialize Celeritas
     auto& tmi = celeritas::TrackingManagerIntegration::Instance();
-    tmi.SetOptions(celeritas::MakeCelerOptions());
+    tmi.SetOptions(MakeCelerOptions());
 
     // Initialize physics with Celeritas offload
-    auto phys_opts = celeritas::GeantPhysicsOptions::deactivated();
-    phys_opts.ionization = true;
-
-    // Load a subset of particles
-    G4ParticleDefinition* const offload_particles[] = {
-        G4Electron::Definition(),
-        G4Positron::Definition(),
-    };
-    auto tmc = std::make_unique<celeritas::TrackingManagerConstructor>(&tmi);
-    tmc->SetOffloadParticles(offload_particles);
+    using PhysicsOptions = celeritas::GeantPhysicsOptions;
+    auto phys_opts = PhysicsOptions{PhysicsOptions::deactivated()};
+    phys_opts.muon = celeritas::GeantMuonPhysicsOptions{};
 
     auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
-    physics->RegisterPhysics(tmc.release());
+    physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
     run_manager->SetUserInitialization(physics.release());
 
     // Initialize geometry and actions
@@ -121,7 +113,8 @@ int main(int argc, char* argv[])
     run_manager->SetUserInitialization(new ActionInitialization());
 
     // Run events
-    auto const num_events = json.at("num_events").get<size_t>();
+    auto const num_events
+        = json.at("particle_gun").at("num_events").get<size_t>();
     CELER_VALIDATE(num_events, << "Number of events must be positive");
 
     run_manager->Initialize();

@@ -87,7 +87,7 @@ RootIO::RootIO()
         std::string sd_name = name + "_" + std::to_string(copy_num);
         hist_store_.InsertSensDet(pid, copy_num, sd_name);
 
-        CELER_LOG_LOCAL(info)
+        CELER_LOG_LOCAL(debug)
             << "Mapped " << name << " with instance ID " << pid
             << " and copy number " << copy_num << " as sensitive detector";
     }
@@ -126,6 +126,7 @@ void RootIO::Finalize()
 
         RIO_HIST_WRITE(energy);
         RIO_HIST_WRITE(time);
+        RIO_HIST_WRITE(pos_x);
     }
     CELER_LOG_LOCAL(info) << "Wrote Geant4 ROOT output to \""
                           << file_->GetName() << "\"";

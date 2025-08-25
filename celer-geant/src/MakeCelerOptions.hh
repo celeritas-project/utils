@@ -8,11 +8,8 @@
 
 #include <accel/SetupOptions.hh>
 
-namespace celeritas
-{
 //---------------------------------------------------------------------------/
-// Build options to set up Celeritas
+/*!
+ * Celeritas runtime options.
+ */
 celeritas::SetupOptions MakeCelerOptions();
-
-//---------------------------------------------------------------------------//
-}  // namespace celeritas

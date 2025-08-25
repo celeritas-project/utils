@@ -24,6 +24,7 @@ struct SDHistograms
     //! Histograms
     TH1D energy;
     TH1D time;
+    TH1D pos_x;
     //!@}
 
     //! Initialize histograms using the SD name and JSON input data
@@ -57,6 +58,7 @@ struct SDHistograms
         result.sd_name = sd_name;
         SDH_INIT_TH1D(energy);
         SDH_INIT_TH1D(time);
+        SDH_INIT_TH1D(pos_x);
         return result;
 
 #undef SDH_INIT_TH1D

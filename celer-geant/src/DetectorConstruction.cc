@@ -80,7 +80,7 @@ void DetectorConstruction::InitializeSensitiveDetectors()
             sd_manager->AddNewDetector(this_sd.get());
             G4VUserDetectorConstruction::SetSensitiveDetector(
                 log_vol->GetName(), this_sd.release());
-            CELER_LOG(info)
+            CELER_LOG(debug)
                 << "Inserted " << sd_name << " as sensitive detector";
         }
     }

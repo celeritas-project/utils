@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #include "SensitiveDetector.hh"
 
+#include <G4SystemOfUnits.hh>
 #include <corecel/Assert.hh>
 #include <corecel/io/Logger.hh>
 
@@ -38,13 +39,14 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     auto rio = RootIO::Instance();
     CELER_ASSERT(rio);
-    auto hists = rio->Histograms().Find(phys_vol->GetInstanceID(),
-                                        phys_vol->GetCopyNo());
+    auto& hists = rio->Histograms().Find(phys_vol->GetInstanceID(),
+                                         phys_vol->GetCopyNo());
 
 #define SD_FILL(MEMBER, VALUE) hists.MEMBER.Fill(VALUE);
 
     SD_FILL(energy, step->GetTotalEnergyDeposit());
     SD_FILL(time, pre->GetGlobalTime());
+    SD_FILL(pos_x, pre->GetPosition().x() / cm);
 
 #undef SD_FILL
 
