@@ -45,8 +45,8 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 #define SD_FILL(MEMBER, VALUE) hists.MEMBER.Fill(VALUE);
 
     SD_FILL(energy, step->GetTotalEnergyDeposit());
-    SD_FILL(time, pre->GetGlobalTime());
     SD_FILL(pos_x, pre->GetPosition().x() / cm);
+    SD_FILL(time, pre->GetGlobalTime());
 
 #undef SD_FILL
 

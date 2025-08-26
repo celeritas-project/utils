@@ -42,11 +42,11 @@ set(SOURCES
   src/EventAction.cc
   src/HistogramStore.cc
   src/JsonReader.cc
-  src/MakeCelerOptions.cc
   src/PrimaryGeneratorAction.cc
   src/RootIO.cc
   src/RunAction.cc
   src/SensitiveDetector.cc
+  src/StackingAction.cc
 )
 
 add_executable(celer-geant

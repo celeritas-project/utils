@@ -9,6 +9,7 @@
 #include "EventAction.hh"
 #include "PrimaryGeneratorAction.hh"
 #include "RunAction.hh"
+#include "StackingAction.hh"
 
 //---------------------------------------------------------------------------//
 /*!
@@ -30,4 +31,5 @@ void ActionInitialization::Build() const
     this->SetUserAction(new RunAction());
     this->SetUserAction(new PrimaryGeneratorAction());
     this->SetUserAction(new EventAction());
+    this->SetUserAction(new StackingAction());
 }

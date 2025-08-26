@@ -23,8 +23,8 @@ struct SDHistograms
     //!@{
     //! Histograms
     TH1D energy;
-    TH1D time;
     TH1D pos_x;
+    TH1D time;
     //!@}
 
     //! Initialize histograms using the SD name and JSON input data
@@ -57,8 +57,8 @@ struct SDHistograms
         SDHistograms result;
         result.sd_name = sd_name;
         SDH_INIT_TH1D(energy);
-        SDH_INIT_TH1D(time);
         SDH_INIT_TH1D(pos_x);
+        SDH_INIT_TH1D(time);
         return result;
 
 #undef SDH_INIT_TH1D
@@ -68,7 +68,7 @@ struct SDHistograms
 //---------------------------------------------------------------------------//
 /*!
  * Helper struct for indexing physical volumes to an object.
- * (e.g. std::map<SensDetId, Object> map)
+ * (e.g. std::map<SensDetId, SDHistograms> map)
  */
 struct SensDetId
 {

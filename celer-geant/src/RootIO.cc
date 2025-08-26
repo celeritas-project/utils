@@ -125,8 +125,8 @@ void RootIO::Finalize()
         hist_sd_dir->cd();
 
         RIO_HIST_WRITE(energy);
-        RIO_HIST_WRITE(time);
         RIO_HIST_WRITE(pos_x);
+        RIO_HIST_WRITE(time);
     }
     CELER_LOG_LOCAL(info) << "Wrote Geant4 ROOT output to \""
                           << file_->GetName() << "\"";
