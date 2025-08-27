@@ -21,17 +21,11 @@
 
 //---------------------------------------------------------------------------/
 /*!
- * Helper map for loading vector of \c G4ParticleDefinition from PDGs in the
- * JSON input.
+ * Load vector of \c G4ParticleDefinition from list of PDGs.
  */
-celeritas::SetupOptions::VecG4PD from_json()
+celeritas::SetupOptions::VecG4PD from_pdgs(std::vector<int> input)
 {
     using celeritas::PDGNumber;
-
-    celeritas::SetupOptions::VecG4PD result;
-    auto& json = JsonReader::Instance();
-    auto const input = json.at("offload_particles").get<std::vector<int>>();
-
     static std::unordered_map<PDGNumber, G4ParticleDefinition*> supported = {
         {celeritas::pdg::gamma(), G4Gamma::Definition()},
         {celeritas::pdg::electron(), G4Electron::Definition()},
@@ -40,6 +34,7 @@ celeritas::SetupOptions::VecG4PD from_json()
         {celeritas::pdg::mu_plus(), G4MuonPlus::Definition()},
     };
 
+    celeritas::SetupOptions::VecG4PD result;
     for (auto pdg : input)
     {
         auto it = supported.find(PDGNumber{pdg});
@@ -56,10 +51,16 @@ celeritas::SetupOptions::VecG4PD from_json()
  */
 celeritas::SetupOptions MakeCelerOptions()
 {
+    using PDG = int;
+    using VecPDG = std::vector<PDG>;
+
+    auto& json = JsonReader::Instance().at("celeritas");
+
     celeritas::SetupOptions opts;
-    opts.max_num_tracks = 1024 * 16;
-    opts.initializer_capacity = opts.max_num_tracks * 8;
-    opts.offload_particles = from_json();
+    opts.max_num_tracks = json.at("max_num_tracks").get<size_t>();
+    opts.initializer_capacity = json.at("initializer_capacity").get<size_t>();
+    opts.offload_particles
+        = from_pdgs(json.at("offload_particles").get<VecPDG>());
     opts.sd.ignore_zero_deposition = false;
 
     // Set along-step factory with zero field

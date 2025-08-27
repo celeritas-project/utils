@@ -1,11 +1,19 @@
 {
     "geometry": "geometry.gdml",
     "root_output": "output.root",
+    "celeritas": {
+        "max_num_tracks": 16384,
+        "initializer_capacity": 131072,
+        "offload_particles": [
+            13,
+            -13
+        ]
+    },
     "num_threads": 1,
     "log_progress": 1,
     "particle_gun": {
         "num_events": 1,
-        "pdg": 11,
+        "pdg": 13,
         "energy": 100,
         "vertex": [
             0,
@@ -22,17 +30,34 @@
         "energy": {
             "num_bins": 100,
             "min": 0,
-            "max": 5
+            "max": 20
         },
-        "time": {
+        "step_len": {
             "num_bins": 100,
-            "min": -10,
-            "max": 10
+            "min": 0,
+            "max": 1.5
         },
         "pos_x": {
             "num_bins": 100,
-            "min": -24,
-            "max": 24
+            "min": 0,
+            "max": 7
+        },
+        "pos_yz": {
+            "x": {
+                "num_bins": 100,
+                "min": -0.06,
+                "max": 0.06
+            },
+            "y": {
+                "num_bins": 100,
+                "min": -0.06,
+                "max": 0.06
+            }
+        },
+        "time": {
+            "num_bins": 100,
+            "min": 0,
+            "max": 0.3
         }
     }
 }

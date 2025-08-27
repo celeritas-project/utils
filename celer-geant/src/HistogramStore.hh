@@ -8,6 +8,7 @@
 
 #include <string>
 #include <TH1D.h>
+#include <TH2D.h>
 #include <corecel/Assert.hh>
 
 #include "JsonReader.hh"
@@ -23,7 +24,9 @@ struct SDHistograms
     //!@{
     //! Histograms
     TH1D energy;
+    TH1D step_len;
     TH1D pos_x;
+    TH2D pos_yz;
     TH1D time;
     //!@}
 
@@ -33,35 +36,56 @@ struct SDHistograms
         struct HistDef
         {
             size_t nbins;
-            int min;
-            int max;
+            double min;
+            double max;
         };
-        auto const& j = JsonReader::Instance().at("histograms");
-        auto histogram_def = [&](std::string name) -> HistDef {
+
+        auto hist_def
+            = [](nlohmann::json const& j, std::string name) -> HistDef {
             auto jx = j.at(name);
             HistDef h;
             h.nbins = jx.at("num_bins").get<size_t>();
-            h.min = jx.at("min").get<int>();
-            h.max = jx.at("max").get<int>();
+            h.min = jx.at("min").get<double>();
+            h.max = jx.at("max").get<double>();
             return h;
         };
+
+        auto const& json_hist = JsonReader::Instance().at("histograms");
 
 #define SDH_INIT_TH1D(HIST)                                                 \
     {                                                                       \
         std::string hname = sd_name + "_" + #HIST;                          \
-        auto const hd = histogram_def(#HIST);                               \
+        auto const hd = hist_def(json_hist, #HIST);                         \
         result.HIST                                                         \
             = TH1D(hname.c_str(), hname.c_str(), hd.nbins, hd.min, hd.max); \
     }
+#define SDH_INIT_TH2D(HIST)                                  \
+    {                                                        \
+        std::string hname = sd_name + "_" + #HIST;           \
+        auto const hdx = hist_def(json_hist.at(#HIST), "x"); \
+        auto const hdy = hist_def(json_hist.at(#HIST), "y"); \
+        result.HIST = TH2D(hname.c_str(),                    \
+                           hname.c_str(),                    \
+                           hdx.nbins,                        \
+                           hdx.min,                          \
+                           hdx.max,                          \
+                           hdy.nbins,                        \
+                           hdy.min,                          \
+                           hdy.max);                         \
+    }
 
+        //// Initialie histograms ////
         SDHistograms result;
         result.sd_name = sd_name;
         SDH_INIT_TH1D(energy);
+        SDH_INIT_TH1D(step_len);
         SDH_INIT_TH1D(pos_x);
+        SDH_INIT_TH2D(pos_yz);
         SDH_INIT_TH1D(time);
         return result;
 
 #undef SDH_INIT_TH1D
+#undef SDH_INIT_TH2D
     }
 };
 
