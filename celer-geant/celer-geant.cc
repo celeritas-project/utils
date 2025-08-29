@@ -25,48 +25,6 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * Validate minimal set of JSON input keys.
- */
-void validate_input()
-{
-#define VALIDATE_MAIN_KEY(KEY) \
-    CELER_VALIDATE(j.contains(#KEY), << "\"" << #KEY << "\" key missing");
-
-#define VALIDATE_HIST_KEY(HIST)        \
-    CELER_VALIDATE(jh.contains(#HIST), \
-                   << "Histogram \"" << #HIST << "\" missing");
-
-#define VALIDATE_HIST_DEF_KEY(HIST, KEY)                                    \
-    CELER_VALIDATE(jh.at(#HIST).contains(#KEY),                             \
-                   << "Missing \"" << #KEY << "\" in histogram \"" << #HIST \
-                   << "\"");
-
-#define VALIDATE_HIST_DEF(HIST)            \
-    VALIDATE_HIST_KEY(HIST)                \
-    VALIDATE_HIST_DEF_KEY(HIST, num_bins); \
-    VALIDATE_HIST_DEF_KEY(HIST, min);      \
-    VALIDATE_HIST_DEF_KEY(HIST, max);
-
-    // Validate all main JSON input terms
-    auto const& j = JsonReader::Instance();
-    VALIDATE_MAIN_KEY(geometry);
-    VALIDATE_MAIN_KEY(root_output);
-    VALIDATE_MAIN_KEY(num_threads);
-    VALIDATE_MAIN_KEY(histograms);
-
-    // Validate histogram information
-    auto const& jh = j.at("histograms");
-    VALIDATE_HIST_DEF(energy);
-    VALIDATE_HIST_DEF(time);
-
-#undef VALIDATE_MAIN_KEY
-#undef VALIDATE_HIST_KEY
-#undef VALIDATE_HIST_DEF_KEY
-#undef VALIDATE_HIST_DEF
-}
-
-//---------------------------------------------------------------------------//
-/*!
  * Run a Celeritas-Geant4 execution run for physics validation.
  *
  * See README for details.
@@ -82,8 +40,6 @@ int main(int argc, char* argv[])
 
     // Load and verify input file
     JsonReader::Construct(argv[1]);
-    validate_input();
-
     auto const& json = JsonReader::Instance();
     auto const num_threads = json.at("num_threads").get<size_t>();
     CELER_VALIDATE(num_threads > 0, << "Number of threads must be positive");
@@ -100,8 +56,8 @@ int main(int argc, char* argv[])
 
     // Initialize physics with Celeritas offload
     using PhysicsOptions = celeritas::GeantPhysicsOptions;
-    auto phys_opts = PhysicsOptions{PhysicsOptions::deactivated()};
-    phys_opts.muon = celeritas::GeantMuonPhysicsOptions{};
+    using MuonPhysicsOptions = celeritas::GeantMuonPhysicsOptions;
+    auto phys_opts = PhysicsOptions{};
 
     auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
     physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));

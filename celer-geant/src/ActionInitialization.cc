@@ -13,18 +13,16 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * Set up Celeritas offload on master thread and initialize it via the
- * \c G4UserRunAction .
+ * Initialize Celeritas offload on master thread.
  */
 void ActionInitialization::BuildForMaster() const
 {
-    // RunAction is responsible for initializing Celeritas
     this->SetUserAction(new RunAction());
 }
 
 //---------------------------------------------------------------------------//
 /*!
- * Set up all worker thread user actions and Celeritas offload interface.
+ * Set up all worker thread user-actions and Celeritas offload interface.
  */
 void ActionInitialization::Build() const
 {

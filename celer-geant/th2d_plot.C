@@ -1,3 +1,7 @@
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
+// SPDX-License-Identifier: (Apache-2.0 OR MIT)
+//---------------------------------------------------------------------------//
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH2D.h>
@@ -6,11 +10,14 @@
 #include <TText.h>
 
 //---------------------------------------------------------------------------//
+// Sensitive detector and histogram names
 static std::string sd_name = "world_sd_0";
 static std::string hist_name = "pos_yz";
+// Title
 static char const* hist_title = "Celeritas 0.6 dev [a075958fc]";
 
 //---------------------------------------------------------------------------//
+// Plot TH2D histogram.
 void th2d_plot()
 {
     auto file = TFile::Open("output.root", "read");
@@ -31,7 +38,7 @@ void th2d_plot()
     h2d->Draw("ncolz");
 
     gStyle->SetOptStat("emr");  // Include (e)ntries, (m)ean, and (r)ms
-    c->Update();  // Generate stats box after setting it to true
+    c->Update();  // Update stats box ptr after ::Draw
 
     // Update stats box
     h2d->SetStats(true);
@@ -44,6 +51,7 @@ void th2d_plot()
     stats->SetY2NDC(0.85);
     c->Modified();  // Redraw canvas
 
+    // Add title
     auto title_text = new TText(0.17, 0.92, hist_title);
     title_text->SetNDC();
     title_text->SetTextColor(kGray);

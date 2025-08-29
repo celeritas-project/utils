@@ -22,6 +22,7 @@ DetectorConstruction::DetectorConstruction(std::string gdml_filename)
 {
     CELER_VALIDATE(!gdml_filename.empty(), << "GDML filename is empty");
     parser_.SetStripFlag(false);
+    parser_.SetOverlapCheck(false);
     parser_.Read(gdml_filename, false);
 }
 
@@ -59,7 +60,9 @@ void DetectorConstruction::InitializeSensitiveDetectors()
 {
     CELER_LOG(status) << "Initializing sensitive detectors";
     auto sd_manager = G4SDManager::GetSDMpointer();
+    CELER_ASSERT(sd_manager);
     auto const aux_map = parser_.GetAuxMap();
+    CELER_ASSERT(aux_map);
 
     for (auto iter = aux_map->begin(); iter != aux_map->end(); iter++)
     {

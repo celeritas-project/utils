@@ -12,37 +12,58 @@
 
 //---------------------------------------------------------------------------//
 // Sensitive detector and histogram names
-static std::string sd_name = "world_sd_0";
-static std::string hist_name = "energy";
+static std::string sd_name = "sd_gap_";  //< TestEM3 example with 50 replicas
+static std::string hist_name = "energy_dep";
 // Legend and title
-static char const* hist_title = "";
-static char const* commit_hash = "*a075958fc";
-static char const* x_axis_title = "Step energy deposition [MeV]";
+static char const* hist_title = "Title";
+static char const* commit_hash = "[commit hash]";
+static char const* x_axis_title = "axis name";
 static char const* geant4_legend = "Geant4 v11.3.0";
-static char const* celeritas_legend = "Celeritas v0.6 dev*";
+static char const* celeritas_legend = "Celeritas v0.6 dev";
 
 //---------------------------------------------------------------------------//
-// Compare Celeritas vs. Geant4 TH1D histograms.
-void th1d_compare()
+void th1d_sdreplicas_compare()
 {
     auto file_g4 = TFile::Open("output-g4.root", "read");
     auto file_cel = TFile::Open("output-cel.root", "read");
 
-    std::string hist_dir = "histograms/";
+    std::string const hist_dir = "histograms/";
+
+    // Initialize histograms and defing binning when first histogram is loaded
+    TH1D *h_g4, *h_cel;
     size_t nbins;
     double xmin, xmax;
 
-    std::string sd_hist = hist_dir + sd_name + "/" + sd_name + "_" + hist_name;
-    std::cout << sd_hist << std::endl;
-    auto h_g4 = file_g4->Get<TH1D>(sd_hist.c_str());
-    auto h_cel = file_cel->Get<TH1D>(sd_hist.c_str());
-    h_g4->SetTitle("");
-    h_cel->SetTitle("");
+    // TestEM3 has 50 layers
+    for (int i = 0; i < 50; i++)
+    {
+        std::string this_sd = sd_name + std::to_string(i);
+        std::string sd_dir = hist_dir + this_sd;
+        std::string sd_hist = sd_dir + "/" + this_sd + "_" + hist_name;
 
-    // Initialize histograms with correct binning
-    nbins = h_g4->GetNbinsX();
-    xmin = h_g4->GetXaxis()->GetXmin();
-    xmax = h_g4->GetXaxis()->GetXmax();
+        auto this_hg4 = file_g4->Get<TH1D>(sd_hist.c_str());
+        auto this_hcel = file_cel->Get<TH1D>(sd_hist.c_str());
+
+        if (i == 0)
+        {
+            if (!this_hg4 || !this_hcel)
+            {
+                std::cout << "Histogram \"" << hist_name << "\" not found"
+                          << std::endl;
+                return;
+            }
+
+            // Initialize histograms with correct binning
+            nbins = this_hg4->GetNbinsX();
+            xmin = this_hg4->GetXaxis()->GetXmin();
+            xmax = this_hg4->GetXaxis()->GetXmax();
+            h_g4 = new TH1D("g4", "", nbins, xmin, xmax);
+            h_cel = new TH1D("cel", "", nbins, xmin, xmax);
+        }
+
+        h_g4->Add(this_hg4);
+        h_cel->Add(this_hcel);
+    }
 
     // Create relative error histograms
     auto h_g4_rel_err = new TH1D("G4 rel. err.", "", nbins, xmin, xmax);
@@ -86,14 +107,13 @@ void th1d_compare()
 
     h_g4->GetXaxis()->SetLabelOffset(99);
     h_g4->GetYaxis()->SetLabelOffset(0.007);
-    h_g4->GetYaxis()->SetLabelSize(0.05);
     h_g4->GetYaxis()->CenterTitle();
 
     // Draw histograms
     h_g4->Draw("PE2");
     h_cel->Draw("hist sames");
 
-    auto legend_top = new TLegend(0.55, 0.46, 0.86, 0.86);
+    auto legend_top = new TLegend(0.57, 0.46, 0.86, 0.86);
     legend_top->AddEntry(h_g4, geant4_legend, "p");
     legend_top->AddEntry(h_rel_diff, celeritas_legend, "l");
     legend_top->AddEntry(new TH1D(), "Statistical errors:", "f");

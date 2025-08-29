@@ -16,6 +16,7 @@
 #include <accel/SetupOptions.hh>
 #include <accel/TrackingManagerConstructor.hh>
 #include <celeritas/phys/PDGNumber.hh>
+#include <corecel/Assert.hh>
 
 #include "JsonReader.hh"
 
@@ -34,6 +35,10 @@ celeritas::SetupOptions::VecG4PD from_pdgs(std::vector<int> input)
         {celeritas::pdg::mu_plus(), G4MuonPlus::Definition()},
     };
 
+    CELER_VALIDATE(!input.empty(),
+                   << "'offload_particles' is present but "
+                      "empty. Remove it to use Celeritas "
+                      "default list of offloaded particles.");
     celeritas::SetupOptions::VecG4PD result;
     for (auto pdg : input)
     {
@@ -56,15 +61,25 @@ celeritas::SetupOptions MakeCelerOptions()
 
     auto& json = JsonReader::Instance().at("celeritas");
 
+#define SO_VALIDATE_SIZET(NAME) \
+    CELER_VALIDATE(NAME > 0, << "'" << #NAME << "' must be positive");
+
     celeritas::SetupOptions opts;
     opts.max_num_tracks = json.at("max_num_tracks").get<size_t>();
+    SO_VALIDATE_SIZET(opts.max_num_tracks);
     opts.initializer_capacity = json.at("initializer_capacity").get<size_t>();
-    opts.offload_particles
-        = from_pdgs(json.at("offload_particles").get<VecPDG>());
+    SO_VALIDATE_SIZET(opts.initializer_capacity);
+    if (json.contains("offload_particles"))
+    {
+        opts.offload_particles
+            = from_pdgs(json.at("offload_particles").get<VecPDG>());
+    }
     opts.sd.ignore_zero_deposition = false;
 
     // Set along-step factory with zero field
     opts.make_along_step = celeritas::UniformAlongStepFactory();
 
     return opts;
+
+#undef SO_VALIDATE_SIZET
 }

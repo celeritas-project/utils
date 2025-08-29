@@ -12,6 +12,8 @@
 //---------------------------------------------------------------------------//
 /*!
  * Classify any particle that should not be offloaded as \c fKill .
+ *
+ * \todo: Improve initial default list.
  */
 class StackingAction : public G4UserStackingAction
 {
@@ -24,5 +26,5 @@ class StackingAction : public G4UserStackingAction
 
   private:
     using PDG = int;
-    std::vector<PDG> valid_pdgs_;
+    std::vector<PDG> valid_pdgs_{11, -11, 22};
 };

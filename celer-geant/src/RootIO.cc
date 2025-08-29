@@ -118,13 +118,19 @@ void RootIO::Finalize()
 {
 #define RIO_HIST_WRITE(MEMBER) hist.MEMBER.Write();
 
+    auto const num_events = JsonReader::Instance()
+                                .at("particle_gun")
+                                .at("num_events")
+                                .get<size_t>();
+
     for (auto& [ids, hist] : hist_store_.Map())
     {
         std::string dir_name = "histograms/" + hist.sd_name;
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());
         hist_sd_dir->cd();
 
-        RIO_HIST_WRITE(energy);
+        hist.energy_dep.Scale(1. / num_events);
+        RIO_HIST_WRITE(energy_dep);
         RIO_HIST_WRITE(step_len);
         RIO_HIST_WRITE(pos_x);
         RIO_HIST_WRITE(pos_yz);
