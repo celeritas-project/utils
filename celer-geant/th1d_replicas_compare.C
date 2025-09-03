@@ -29,7 +29,7 @@ void th1d_sdreplicas_compare()
 
     std::string const hist_dir = "histograms/";
 
-    // Initialize histograms and defing binning when first histogram is loaded
+    // Init global histograms and binning after loading the first SD histogram
     TH1D *h_g4, *h_cel;
     size_t nbins;
     double xmin, xmax;
@@ -46,13 +46,6 @@ void th1d_sdreplicas_compare()
 
         if (i == 0)
         {
-            if (!this_hg4 || !this_hcel)
-            {
-                std::cout << "Histogram \"" << hist_name << "\" not found"
-                          << std::endl;
-                return;
-            }
-
             // Initialize histograms with correct binning
             nbins = this_hg4->GetNbinsX();
             xmin = this_hg4->GetXaxis()->GetXmin();

@@ -80,9 +80,9 @@ void DetectorConstruction::InitializeSensitiveDetectors()
             // Add sensitive detector
             std::string sd_name = element.value;
             auto this_sd = std::make_unique<SensitiveDetector>(sd_name);
-            sd_manager->AddNewDetector(this_sd.get());
             G4VUserDetectorConstruction::SetSensitiveDetector(
-                log_vol->GetName(), this_sd.release());
+                log_vol->GetName(), this_sd.get());
+            sd_manager->AddNewDetector(this_sd.release());
             CELER_LOG(debug)
                 << "Inserted " << sd_name << " as sensitive detector";
         }

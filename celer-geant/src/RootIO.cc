@@ -45,6 +45,10 @@ RootIO* RootIO::Instance()
 //---------------------------------------------------------------------------//
 /*!
  * Construct thread-local ROOT I/O.
+ *
+ * This is designed to be initialized on \c G4UserRunAction::BeginOfRunAction
+ * worker threads. This ensures that the detector geometry is in a valid state
+ * so that sensitive detectors can be queried.
  */
 RootIO::RootIO()
 {

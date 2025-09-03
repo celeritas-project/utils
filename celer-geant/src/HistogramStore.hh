@@ -33,6 +33,7 @@ struct SDHistograms
     //! Initialize histograms using the SD name and JSON input data
     static SDHistograms Initialize(std::string sd_name)
     {
+        // Local helper struct for initializing histograms
         struct HistDef
         {
             size_t nbins;
@@ -40,9 +41,21 @@ struct SDHistograms
             double max;
         };
 
-        auto hist_def
+        // Load HistDef info from JSON input
+        auto from_json
             = [](nlohmann::json const& j, std::string name) -> HistDef {
+            CELER_VALIDATE(j.contains(name),
+                           << "Missing '" << name << "' in JSON input.");
             auto jx = j.at(name);
+            CELER_VALIDATE(jx.contains("num_bins"),
+                           << "Histogram \"" << name
+                           << "\": missing \"nbins\" in JSON input.");
+            CELER_VALIDATE(jx.contains("min"),
+                           << "Histogram \"" << name
+                           << "\": missing \"min\" in JSON input.");
+            CELER_VALIDATE(jx.contains("max"),
+                           << "Histogram \"" << name
+                           << "\": missing \"max\" in JSON input.");
             HistDef h;
             h.nbins = jx.at("num_bins").get<size_t>();
             h.min = jx.at("min").get<double>();
@@ -55,23 +68,23 @@ struct SDHistograms
 #define SDH_INIT_TH1D(HIST)                                                 \
     {                                                                       \
         std::string hname = sd_name + "_" + #HIST;                          \
-        auto const hd = hist_def(json_hist, #HIST);                         \
+        auto const hd = from_json(json_hist, #HIST);                        \
         result.HIST                                                         \
             = TH1D(hname.c_str(), hname.c_str(), hd.nbins, hd.min, hd.max); \
     }
-#define SDH_INIT_TH2D(HIST)                                  \
-    {                                                        \
-        std::string hname = sd_name + "_" + #HIST;           \
-        auto const hdx = hist_def(json_hist.at(#HIST), "x"); \
-        auto const hdy = hist_def(json_hist.at(#HIST), "y"); \
-        result.HIST = TH2D(hname.c_str(),                    \
-                           hname.c_str(),                    \
-                           hdx.nbins,                        \
-                           hdx.min,                          \
-                           hdx.max,                          \
-                           hdy.nbins,                        \
-                           hdy.min,                          \
-                           hdy.max);                         \
+#define SDH_INIT_TH2D(HIST)                                   \
+    {                                                         \
+        std::string hname = sd_name + "_" + #HIST;            \
+        auto const hdx = from_json(json_hist.at(#HIST), "x"); \
+        auto const hdy = from_json(json_hist.at(#HIST), "y"); \
+        result.HIST = TH2D(hname.c_str(),                     \
+                           hname.c_str(),                     \
+                           hdx.nbins,                         \
+                           hdx.min,                           \
+                           hdx.max,                           \
+                           hdy.nbins,                         \
+                           hdy.min,                           \
+                           hdy.max);                          \
     }
 
         //// Initialie histograms ////
