@@ -21,6 +21,12 @@ SensitiveDetector::SensitiveDetector(std::string sd_name)
 {
     CELER_VALIDATE(!sd_name.empty(),
                    << "must provide a valid sensitive detector name");
+
+    auto& json = JsonReader::Instance().at("celeritas");
+    if (json.contains("offload_particles"))
+    {
+        valid_pdgs_ = json.at("offload_particles").get<std::vector<PDG>>();
+    }
 }
 
 //---------------------------------------------------------------------------//
@@ -30,11 +36,22 @@ SensitiveDetector::SensitiveDetector(std::string sd_name)
 G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 {
     CELER_EXPECT(step);
-    auto pre = step->GetPreStepPoint();
+    auto* track = step->GetTrack();
+    CELER_ASSERT(track);
+    auto* pd = track->GetParticleDefinition();
+    CELER_ASSERT(pd);
+
+    if (!this->is_pdg_valid(pd->GetPDGEncoding()))
+    {
+        // Do not score particles that aren't in the offload list
+        return false;
+    }
+
+    auto* pre = step->GetPreStepPoint();
     CELER_ASSERT(pre);
-    auto pre_th = pre->GetTouchableHandle();
+    auto& pre_th = pre->GetTouchableHandle();
     CELER_ASSERT(pre_th);
-    auto phys_vol = pre_th->GetVolume();
+    auto* phys_vol = pre_th->GetVolume();
     CELER_ASSERT(phys_vol);
 
     auto rio = RootIO::Instance();
@@ -52,10 +69,11 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     }
 
     auto const& pos = pre->GetPosition() / cm;
+    auto const& len = step->GetStepLength() / cm;
 
     SD_1D_FILL_WEIGHT(energy_dep, pos.x(), step->GetTotalEnergyDeposit());
-    SD_1D_FILL(step_len, step->GetStepLength() / cm);
-    SD_2D_FILL(pos_yz, pos.y() / cm, pos.z() / cm);
+    SD_1D_FILL(step_len, step->GetStepLength());
+    SD_2D_FILL(pos_yz, pos.y(), pos.z());
     SD_1D_FILL(time, pre->GetGlobalTime());
 
     return true;
@@ -64,3 +82,16 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 #undef SD_2D_FILL
 #undef SD_1D_FILL_WEIGHT
 }
+
+//---------------------------------------------------------------------------//
+/*!
+ * Only process PDGs that are listed the \c SetupOptions::offload_particles .
+ *
+ * If the list is empty, it defaults to the Celeritas basic EM list.
+ */
+bool SensitiveDetector::is_pdg_valid(PDG id) const
+{
+    return std::any_of(this->valid_pdgs_.begin(),
+                       this->valid_pdgs_.end(),
+                       [&id](PDG this_pdg) { return id == this_pdg; });
+};

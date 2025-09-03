@@ -23,4 +23,11 @@ class SensitiveDetector : public G4VSensitiveDetector
 
     //! Celeritas callback interface
     G4bool ProcessHits(G4Step* step, G4TouchableHistory*) final;
+
+  private:
+    using PDG = int;
+    std::vector<PDG> valid_pdgs_{11, -11, 22};
+
+    // Verify if PDG is in the list of offloaded particles
+    bool is_pdg_valid(PDG id) const;
 };
