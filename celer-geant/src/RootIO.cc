@@ -88,12 +88,14 @@ RootIO::RootIO()
         auto const name = sd->GetName();
         auto const pid = physvol->GetInstanceID();
         auto const copy_num = physvol->GetCopyNo();
-        std::string sd_name = name + "_" + std::to_string(copy_num);
+        std::string str_pid_copynum = std::to_string(pid) + "_"
+                                      + std::to_string(copy_num);
+        std::string sd_name = name + "_" + str_pid_copynum;
         hist_store_.InsertSensDet(pid, copy_num, sd_name);
 
-        CELER_LOG_LOCAL(debug)
-            << "Mapped " << name << " with instance ID " << pid
-            << " and copy number " << copy_num << " as sensitive detector";
+        CELER_LOG(debug) << "Mapped " << name << " with instance ID " << pid
+                         << " and copy number " << copy_num
+                         << " as sensitive detector";
     }
 }
 
@@ -122,18 +124,21 @@ void RootIO::Finalize()
 {
 #define RIO_HIST_WRITE(MEMBER) hist.MEMBER.Write();
 
+    // Used for normalization
     auto const num_events = JsonReader::Instance()
                                 .at("particle_gun")
                                 .at("num_events")
                                 .get<size_t>();
 
+    std::string const hist_folder = "histograms/";
+
     for (auto& [ids, hist] : hist_store_.Map())
     {
-        std::string dir_name = "histograms/" + hist.sd_name;
+        std::string dir_name = hist_folder + hist.sd_name;
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());
         hist_sd_dir->cd();
 
-        hist.energy_dep.Scale(1. / num_events);
+        hist.energy_dep.Scale(1. / num_events);  // Normalize histogram
         RIO_HIST_WRITE(energy_dep);
         RIO_HIST_WRITE(step_len);
         RIO_HIST_WRITE(pos_x);
