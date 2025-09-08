@@ -11,8 +11,8 @@
 
 //---------------------------------------------------------------------------//
 // Sensitive detector and histogram names
-static std::string sd_name = "world_sd_0";
-static std::string hist_name = "pos_yz";
+static std::string sd_dir = "world_sd_0_0/";
+static std::string hist_name = "pos_xy";
 // Title
 static char const* hist_title = "Celeritas 0.6 dev [a075958fc]";
 
@@ -22,18 +22,17 @@ void th2d_plot()
 {
     auto file = TFile::Open("output.root", "read");
 
-    std::string full_path = "histograms/" + sd_name + "/" + sd_name + "_"
-                            + hist_name;
+    std::string full_path = "histograms/" + sd_dir + hist_name;
     auto* h2d = file->Get<TH2D>(full_path.c_str());
 
     auto c = new TCanvas("", "", 700, 600);
     c->SetLogz();
     c->SetRightMargin(0.13);
     h2d->SetTitle("");
-    h2d->GetXaxis()->SetTitle("Step position y [cm]");
+    h2d->GetXaxis()->SetTitle("Step position x [cm]");
     h2d->GetXaxis()->SetTitleOffset(1.2);
     h2d->GetXaxis()->CenterTitle();
-    h2d->GetYaxis()->SetTitle("Step position z [cm]");
+    h2d->GetYaxis()->SetTitle("Step position y [cm]");
     h2d->GetYaxis()->CenterTitle();
     h2d->Draw("ncolz");
 

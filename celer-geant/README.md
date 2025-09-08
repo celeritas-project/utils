@@ -20,10 +20,15 @@ $ ./celer-geant input.json
 
 # Adding new histograms
 
-The addition of any new histogram is straightforward:
-- Expand JSON with new histogram information
-- `HistogramStore.hh`: Add histogram to `SDHistograms` and initialize it in
-  `SDHistograms::Initialize`
-- `SensitiveDetector.cc`: Fill histogram in `SensitiveDetector::ProcessHits`
+- Expand JSON with new histogram information.
+- `RootDataStore.hh`: Add histogram to `SensDetData` and initialize it in
+  `SensDetData::Initialize`.
+- Fill histogram (usually via `SensitiveDetector::ProcessHits`).
 - `RootIO.cc`: Write histogram to disk during `RootIO::Finalize` using
-  `RIO_HIST_WRITE`
+  `RIO_HIST_WRITE`.
+
+# I/O
+Since `RootIO` is a thread-local singleton that owns a `RootDataStore` object,
+which maps all sensitive detector data, it can be used as a starting point to
+expand it to a more comprehensive I/O system that manages more complex data and
+different output types. 

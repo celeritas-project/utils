@@ -12,17 +12,18 @@
 
 //---------------------------------------------------------------------------//
 // Sensitive detector and histogram names
-static std::string sd_name = "sd_gap_";  //< TestEM3 example with 50 replicas
+static std::string sd_name = "sd_gap";  //< TestEM3 example with 50 replicas
 static std::string hist_name = "energy_dep";
-// Legend and title
-static char const* hist_title = "Title";
+// Axis, title, and legend
+static char const* hist_title = "Step energy deposition";
 static char const* commit_hash = "[commit hash]";
-static char const* x_axis_title = "axis name";
+static char const* x_axis_title = "X-axis position [cm]";
 static char const* geant4_legend = "Geant4 v11.3.0";
 static char const* celeritas_legend = "Celeritas v0.6 dev";
 
 //---------------------------------------------------------------------------//
-void th1d_sdreplicas_compare()
+//! Example loop for the TestEM3 geometry.
+void th1d_replicas_compare()
 {
     auto file_g4 = TFile::Open("output-g4.root", "read");
     auto file_cel = TFile::Open("output-cel.root", "read");
@@ -34,15 +35,22 @@ void th1d_sdreplicas_compare()
     size_t nbins;
     double xmin, xmax;
 
-    // TestEM3 has 50 layers
+    // TestEM3 has 50 layers of gaps + absorbers pairs
+    // Here we are only accumulating data from sd_gap
     for (int i = 0; i < 50; i++)
     {
-        std::string this_sd = sd_name + std::to_string(i);
-        std::string sd_dir = hist_dir + this_sd;
-        std::string sd_hist = sd_dir + "/" + this_sd + "_" + hist_name;
+        // Instance ID grows by PV: gap (0) | abs (1) | gap (2) | abs (3) | ...
+        std::string instance_id = std::to_string(2 * i);  // sd_gaps are even
+        // Copy number grows linearly with each SD (0-49) for both gap and abs
+        std::string copy_num = std::to_string(i);
+        // SD directory is: sd_name_[instance_id]_[copy_num]/
+        std::string sd_dir = sd_name + "_" + instance_id + "_" + copy_num + "/";
 
-        auto this_hg4 = file_g4->Get<TH1D>(sd_hist.c_str());
-        auto this_hcel = file_cel->Get<TH1D>(sd_hist.c_str());
+        // Full path to the histogram
+        std::string full_path = hist_dir + sd_dir + hist_name;
+
+        auto this_hg4 = file_g4->Get<TH1D>(full_path.c_str());
+        auto this_hcel = file_cel->Get<TH1D>(full_path.c_str());
 
         if (i == 0)
         {
@@ -54,6 +62,7 @@ void th1d_sdreplicas_compare()
             h_cel = new TH1D("cel", "", nbins, xmin, xmax);
         }
 
+        // Add this histogram to the total one
         h_g4->Add(this_hg4);
         h_cel->Add(this_hcel);
     }
@@ -74,10 +83,10 @@ void th1d_sdreplicas_compare()
         h_g4_rel_err_3s->SetBinError(i, 3 * rel_err * 100);
     }
 
-    // Create relative difference histogram: (Geant4 - Celeritas) / Geant4
-    auto h_rel_diff = (TH1D*)h_g4->Clone();
-    h_rel_diff->Add(h_cel, -1);
-    h_rel_diff->Divide(h_g4);
+    // Create relative difference histogram: (Celeritas - Geant4) / Celeritas
+    auto h_rel_diff = (TH1D*)h_cel->Clone();
+    h_rel_diff->Add(h_g4, -1);
+    h_rel_diff->Divide(h_cel);
     h_rel_diff->Scale(100);  // In [%]
 
     // Create canvas

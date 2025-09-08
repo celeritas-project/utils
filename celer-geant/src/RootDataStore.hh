@@ -26,13 +26,13 @@ struct SensDetData
 
     //!@{
     //! ROOT histograms
-    TH1D energy_deposition;
+    TH1D energy_dep;
     TH1D step_len;
     TH1D pos_x;
-    TH2D pos_yz;
+    TH2D pos_xy;
     TH1D time;
-    TH1D delta_costheta;
-    TH1D total_energy_deposition;  //!< Fill(total_edep) at ::EndOfEventAction
+    TH1D costheta;  //!< Pre/post step direction dot product
+    TH1D total_energy_dep;  //!< Fill(total_edep) at ::EndOfEventAction
     //!@}
 
     //!@{
@@ -102,13 +102,13 @@ struct SensDetData
         //// Initialie histograms ////
         SensDetData result;
         result.sd_name = sd_name;
-        SDH_INIT_TH1D(energy_deposition);
+        SDH_INIT_TH1D(energy_dep);
         SDH_INIT_TH1D(step_len);
         SDH_INIT_TH1D(pos_x);
-        SDH_INIT_TH2D(pos_yz);
+        SDH_INIT_TH2D(pos_xy);
         SDH_INIT_TH1D(time);
-        SDH_INIT_TH1D(delta_costheta);
-        SDH_INIT_TH1D(total_energy_deposition);
+        SDH_INIT_TH1D(costheta);
+        SDH_INIT_TH1D(total_energy_dep);
         return result;
 
 #undef SDH_INIT_TH1D

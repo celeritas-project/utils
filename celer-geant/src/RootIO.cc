@@ -138,14 +138,14 @@ void RootIO::Finalize()
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());
         hist_sd_dir->cd();
 
-        data.energy_deposition.Scale(1. / num_events);  // Normalize histogram
-        RIO_HIST_WRITE(energy_deposition);
+        data.energy_dep.Scale(1. / num_events);  // Normalize histogram
+        RIO_HIST_WRITE(energy_dep);
         RIO_HIST_WRITE(step_len);
         RIO_HIST_WRITE(pos_x);
-        RIO_HIST_WRITE(pos_yz);
+        RIO_HIST_WRITE(pos_xy);
         RIO_HIST_WRITE(time);
-        RIO_HIST_WRITE(delta_costheta);
-        RIO_HIST_WRITE(total_energy_deposition);
+        RIO_HIST_WRITE(costheta);
+        RIO_HIST_WRITE(total_energy_dep);
     }
     CELER_LOG_LOCAL(info) << "Wrote Geant4 ROOT output to \""
                           << file_->GetName() << "\"";

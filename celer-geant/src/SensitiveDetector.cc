@@ -79,10 +79,13 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     auto const len = step->GetStepLength() / cm;
     auto const edep = step->GetTotalEnergyDeposit();
 
-    SD_1D_FILL_WEIGHT(energy_deposition, pre_pos.z(), edep);
+    // Add total energy deposit for this event for this SD
+    data.total_edep += edep;
+
+    SD_1D_FILL_WEIGHT(energy_dep, pre_pos.z(), edep);
     SD_1D_FILL(step_len, step->GetStepLength());
     SD_1D_FILL(pos_x, pre_pos.z());
-    SD_2D_FILL(pos_yz, pre_pos.x(), pre_pos.y());
+    SD_2D_FILL(pos_xy, pre_pos.x(), pre_pos.y());
     SD_1D_FILL(time, pre->GetGlobalTime());
 
     auto is_position_different
@@ -92,16 +95,14 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     if (is_position_different(track->GetVertexPosition(), pre->GetPosition()))
     {
-        // Hack to fetch correct post-step point without current step number
+        // This is a hack to have a valid post-step point without using
+        // track->GetCurrentStepNumber(), which is not available from Celeritas
         auto* post = step->GetPostStepPoint();
         CELER_ASSERT(post);
         auto const& pre_dir = to_array(pre->GetMomentumDirection());
         auto const& post_dir = to_array(post->GetMomentumDirection());
-        SD_1D_FILL(delta_costheta, celeritas::dot_product(pre_dir, post_dir));
+        SD_1D_FILL(costheta, celeritas::dot_product(pre_dir, post_dir));
     }
-
-    // Add total energy deposit for this event for this SD
-    data.total_edep += edep;
 
     return true;
 

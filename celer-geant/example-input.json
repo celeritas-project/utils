@@ -2,8 +2,8 @@
     "geometry": "geometry.gdml",
     "root_output": "output.root",
     "celeritas": {
-        "max_num_tracks": 16384,
-        "initializer_capacity": 131072,
+        "max_num_tracks": 10,
+        "initializer_capacity": 500,
         "offload_particles": [
             13,
             -13
@@ -14,50 +14,60 @@
     "particle_gun": {
         "num_events": 1,
         "pdg": 13,
-        "energy": 100,
+        "energy": 1000,
         "vertex": [
             0,
             0,
             0
         ],
         "direction": [
-            1,
             0,
-            0
+            0,
+            1
         ]
     },
     "histograms": {
-        "energy": {
+        "energy_dep": {
             "num_bins": 100,
             "min": 0,
-            "max": 20
+            "max": 100
         },
         "step_len": {
             "num_bins": 100,
             "min": 0,
-            "max": 1.5
+            "max": 100
         },
         "pos_x": {
             "num_bins": 100,
             "min": 0,
-            "max": 7
+            "max": 100
         },
-        "pos_yz": {
+        "pos_xy": {
             "x": {
                 "num_bins": 100,
-                "min": -0.06,
-                "max": 0.06
+                "min": -10,
+                "max": 10
             },
             "y": {
                 "num_bins": 100,
-                "min": -0.06,
-                "max": 0.06
+                "min": -10,
+                "max": 10
             }
         },
         "time": {
             "num_bins": 100,
             "min": 0,
-            "max": 0.3
+            "max": 10
+        },
+        "costheta": {
+            "num_bins": 100,
+            "min": -1,
+            "max": 1
+        },
+        "total_energy_dep": {
+            "num_bins": 100,
+            "min": 0,
+            "max": 100
         }
     }
 }

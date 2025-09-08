@@ -12,9 +12,9 @@
 
 //---------------------------------------------------------------------------//
 // Sensitive detector and histogram names
-static std::string sd_name = "world_sd_0";
+static std::string sd_dir = "world_sd_0_0/";
 static std::string hist_name = "energy";
-// Legend and title
+// Axis, title, and legend
 static char const* hist_title = "";
 static char const* commit_hash = "*a075958fc";
 static char const* x_axis_title = "Step energy deposition [MeV]";
@@ -28,21 +28,17 @@ void th1d_compare()
     auto file_g4 = TFile::Open("output-g4.root", "read");
     auto file_cel = TFile::Open("output-cel.root", "read");
 
-    std::string hist_dir = "histograms/";
-    size_t nbins;
-    double xmin, xmax;
-
-    std::string sd_hist = hist_dir + sd_name + "/" + sd_name + "_" + hist_name;
-    std::cout << sd_hist << std::endl;
+    std::string const hist_dir = "histograms/";
+    std::string sd_hist = hist_dir + sd_dir + hist_name;
     auto h_g4 = file_g4->Get<TH1D>(sd_hist.c_str());
     auto h_cel = file_cel->Get<TH1D>(sd_hist.c_str());
     h_g4->SetTitle("");
     h_cel->SetTitle("");
 
     // Initialize histograms with correct binning
-    nbins = h_g4->GetNbinsX();
-    xmin = h_g4->GetXaxis()->GetXmin();
-    xmax = h_g4->GetXaxis()->GetXmax();
+    auto const nbins = h_g4->GetNbinsX();
+    auto const xmin = h_g4->GetXaxis()->GetXmin();
+    auto const xmax = h_g4->GetXaxis()->GetXmax();
 
     // Create relative error histograms
     auto h_g4_rel_err = new TH1D("G4 rel. err.", "", nbins, xmin, xmax);
@@ -60,10 +56,10 @@ void th1d_compare()
         h_g4_rel_err_3s->SetBinError(i, 3 * rel_err * 100);
     }
 
-    // Create relative difference histogram: (Geant4 - Celeritas) / Geant4
-    auto h_rel_diff = (TH1D*)h_g4->Clone();
-    h_rel_diff->Add(h_cel, -1);
-    h_rel_diff->Divide(h_g4);
+    // Create relative difference histogram: (Celeritas - Geant4) / Celeritas
+    auto h_rel_diff = (TH1D*)h_cel->Clone();
+    h_rel_diff->Add(h_g4, -1);
+    h_rel_diff->Divide(h_cel);
     h_rel_diff->Scale(100);  // In [%]
 
     // Create canvas

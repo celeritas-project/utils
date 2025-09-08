@@ -48,10 +48,10 @@ void EventAction::BeginOfEventAction(G4Event const* event)
  */
 void EventAction::EndOfEventAction(G4Event const* event)
 {
-    // Fill histogram with total energy deposited in each SD
+    // Fill histograms with total energy deposited in each SD
     auto& sd_store = RootIO::Instance()->Histograms();
     for (auto& [ids, data] : sd_store.Map())
     {
-        data.total_energy_deposition.Fill(data.total_edep);
+        data.total_energy_dep.Fill(data.total_edep);
     }
 }
