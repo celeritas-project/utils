@@ -122,7 +122,7 @@ void RootIO::StoreDiagnostics(std::string diagnostics)
  */
 void RootIO::Finalize()
 {
-#define RIO_HIST_WRITE(MEMBER) hist.MEMBER.Write();
+#define RIO_HIST_WRITE(MEMBER) data.MEMBER.Write();
 
     // Used for normalization
     auto const num_events = JsonReader::Instance()
@@ -132,18 +132,20 @@ void RootIO::Finalize()
 
     std::string const hist_folder = "histograms/";
 
-    for (auto& [ids, hist] : hist_store_.Map())
+    for (auto& [ids, data] : hist_store_.Map())
     {
-        std::string dir_name = hist_folder + hist.sd_name;
+        std::string dir_name = hist_folder + data.sd_name;
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());
         hist_sd_dir->cd();
 
-        hist.energy_dep.Scale(1. / num_events);  // Normalize histogram
-        RIO_HIST_WRITE(energy_dep);
+        data.energy_deposition.Scale(1. / num_events);  // Normalize histogram
+        RIO_HIST_WRITE(energy_deposition);
         RIO_HIST_WRITE(step_len);
         RIO_HIST_WRITE(pos_x);
         RIO_HIST_WRITE(pos_yz);
         RIO_HIST_WRITE(time);
+        RIO_HIST_WRITE(delta_costheta);
+        RIO_HIST_WRITE(total_energy_deposition);
     }
     CELER_LOG_LOCAL(info) << "Wrote Geant4 ROOT output to \""
                           << file_->GetName() << "\"";

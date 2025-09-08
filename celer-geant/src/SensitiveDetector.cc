@@ -9,6 +9,7 @@
 #include <G4SystemOfUnits.hh>
 #include <corecel/Assert.hh>
 #include <corecel/io/Logger.hh>
+#include <corecel/math/ArrayUtils.hh>
 
 #include "RootIO.hh"
 
@@ -35,6 +36,8 @@ SensitiveDetector::SensitiveDetector(std::string sd_name)
  */
 G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 {
+    using celeritas::Array;
+
     CELER_EXPECT(step);
     auto* track = step->GetTrack();
     CELER_ASSERT(track);
@@ -55,26 +58,50 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     CELER_ASSERT(phys_vol);
 
     auto rio = RootIO::Instance();
-    CELER_ASSERT(rio);
-    auto& hists = rio->Histograms().Find(phys_vol->GetInstanceID(),
-                                         phys_vol->GetCopyNo());
+    auto& data = rio->Histograms().Find(phys_vol->GetInstanceID(),
+                                        phys_vol->GetCopyNo());
 
-#define SD_1D_FILL(MEMBER, VALUE) hists.MEMBER.Fill(VALUE);
-#define SD_2D_FILL(MEMBER, X, Y) hists.MEMBER.Fill(X, Y);
+    auto to_array
+        = [](CLHEP::Hep3Vector const& inp) -> celeritas::Array<double, 3> {
+        return celeritas::Array<double, 3>{inp.x(), inp.y(), inp.z()};
+    };
+
+#define SD_1D_FILL(MEMBER, VALUE) data.MEMBER.Fill(VALUE);
+#define SD_2D_FILL(MEMBER, X, Y) data.MEMBER.Fill(X, Y);
 #define SD_1D_FILL_WEIGHT(MEMBER, VALUE, W)         \
     {                                               \
-        auto& h = hists.MEMBER;                     \
+        auto& h = data.MEMBER;                      \
         auto const i = h.FindBin(VALUE);            \
         h.SetBinContent(i, h.GetBinContent(i) + W); \
     }
 
-    auto const& pos = pre->GetPosition() / cm;
-    auto const& len = step->GetStepLength() / cm;
+    auto const& pre_pos = pre->GetPosition() / cm;
+    auto const len = step->GetStepLength() / cm;
+    auto const edep = step->GetTotalEnergyDeposit();
 
-    SD_1D_FILL_WEIGHT(energy_dep, pos.x(), step->GetTotalEnergyDeposit());
+    SD_1D_FILL_WEIGHT(energy_deposition, pre_pos.z(), edep);
     SD_1D_FILL(step_len, step->GetStepLength());
-    SD_2D_FILL(pos_yz, pos.y(), pos.z());
+    SD_1D_FILL(pos_x, pre_pos.z());
+    SD_2D_FILL(pos_yz, pre_pos.x(), pre_pos.y());
     SD_1D_FILL(time, pre->GetGlobalTime());
+
+    auto is_position_different
+        = [](G4ThreeVector const& a, G4ThreeVector const& b) -> bool {
+        return a.x() != b.x() || a.y() != b.y() || a.z() != b.z();
+    };
+
+    if (is_position_different(track->GetVertexPosition(), pre->GetPosition()))
+    {
+        // Hack to fetch correct post-step point without current step number
+        auto* post = step->GetPostStepPoint();
+        CELER_ASSERT(post);
+        auto const& pre_dir = to_array(pre->GetMomentumDirection());
+        auto const& post_dir = to_array(post->GetMomentumDirection());
+        SD_1D_FILL(delta_costheta, celeritas::dot_product(pre_dir, post_dir));
+    }
+
+    // Add total energy deposit for this event for this SD
+    data.total_edep += edep;
 
     return true;
 

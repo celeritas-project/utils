@@ -22,8 +22,8 @@ class EventAction final : public G4UserEventAction
     //! Begin of event user-action
     void BeginOfEventAction(G4Event const* event) final;
 
-    //! Null-op end of event user-action
-    void EndOfEventAction(G4Event const*) final {};
+    //! End of event user-action
+    void EndOfEventAction(G4Event const*) final;
 
   private:
     size_t log_progress_;

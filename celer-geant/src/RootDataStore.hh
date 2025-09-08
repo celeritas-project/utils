@@ -2,7 +2,7 @@
 // Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file src/HistogramStore.hh
+//! \file src/RootDataStore.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
@@ -15,23 +15,34 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * Histogram storage for sensitive detectors.
+ * Data storage container for sensitive detectors.
+ *
+ * This struct contains every object used by the ROOT I/O and it is constructed
+ * for every sensitive detector found in the \c G4PhysicalVolumeStore .
  */
-struct SDHistograms
+struct SensDetData
 {
     std::string sd_name;  //!< Sensitive detector name
 
     //!@{
-    //! Histograms
-    TH1D energy_dep;
+    //! ROOT histograms
+    TH1D energy_deposition;
     TH1D step_len;
     TH1D pos_x;
     TH2D pos_yz;
     TH1D time;
+    TH1D delta_costheta;
+    TH1D total_energy_deposition;  //!< Fill(total_edep) at ::EndOfEventAction
+    //!@}
+
+    //!@{
+    //! User-defined data
+    // Accumulate at every step
+    double total_edep{};
     //!@}
 
     //! Initialize histograms using the SD name and JSON input data
-    static SDHistograms Initialize(std::string sd_name)
+    static SensDetData Initialize(std::string sd_name)
     {
         // Local helper struct for initializing histograms
         struct HistDef
@@ -65,36 +76,39 @@ struct SDHistograms
 
         auto const& json_hist = JsonReader::Instance().at("histograms");
 
-#define SDH_INIT_TH1D(HIST)                                                 \
-    {                                                                       \
-        std::string hname = sd_name + "_" + #HIST;                          \
-        auto const hd = from_json(json_hist, #HIST);                        \
-        result.HIST                                                         \
-            = TH1D(hname.c_str(), hname.c_str(), hd.nbins, hd.min, hd.max); \
+#define SDH_INIT_TH1D(HIST)                                                  \
+    {                                                                        \
+        std::string htitle = sd_name + "_" + #HIST;                          \
+        auto const hd = from_json(json_hist, #HIST);                         \
+        result.HIST = TH1D(#HIST, htitle.c_str(), hd.nbins, hd.min, hd.max); \
+        result.HIST.AddDirectory(false);                                     \
     }
 #define SDH_INIT_TH2D(HIST)                                   \
     {                                                         \
-        std::string hname = sd_name + "_" + #HIST;            \
+        std::string htitle = sd_name + "_" + #HIST;           \
         auto const hdx = from_json(json_hist.at(#HIST), "x"); \
         auto const hdy = from_json(json_hist.at(#HIST), "y"); \
-        result.HIST = TH2D(hname.c_str(),                     \
-                           hname.c_str(),                     \
+        result.HIST = TH2D(#HIST,                             \
+                           htitle.c_str(),                    \
                            hdx.nbins,                         \
                            hdx.min,                           \
                            hdx.max,                           \
                            hdy.nbins,                         \
                            hdy.min,                           \
                            hdy.max);                          \
+        result.HIST.AddDirectory(false);                      \
     }
 
         //// Initialie histograms ////
-        SDHistograms result;
+        SensDetData result;
         result.sd_name = sd_name;
-        SDH_INIT_TH1D(energy_dep);
+        SDH_INIT_TH1D(energy_deposition);
         SDH_INIT_TH1D(step_len);
         SDH_INIT_TH1D(pos_x);
         SDH_INIT_TH2D(pos_yz);
         SDH_INIT_TH1D(time);
+        SDH_INIT_TH1D(delta_costheta);
+        SDH_INIT_TH1D(total_energy_deposition);
         return result;
 
 #undef SDH_INIT_TH1D
@@ -105,7 +119,7 @@ struct SDHistograms
 //---------------------------------------------------------------------------//
 /*!
  * Helper struct for indexing physical volumes to an object.
- * (e.g. std::map<SensDetId, SDHistograms> map)
+ * (e.g. std::map<SensDetId, SensDetData> map)
  */
 struct SensDetId
 {
@@ -123,13 +137,13 @@ inline bool operator<(SensDetId const& lhs, SensDetId const& rhs)
 
 //---------------------------------------------------------------------------//
 /*!
- * Histogram storage manager class.
+ * ROOT I/O data storage manager class.
  *
- * This class stores a set of histograms for every sensitive detector in the
- * geometry and allows an easy way to access them using the physical volume
+ * This class stores a \c SensDetData for every sensitive detector in
+ * the geometry and allows an easy way to access them using the physical volume
  * instance ID and copy number.
  */
-class HistogramStore
+class RootDataStore
 {
   public:
     //!@{
@@ -139,17 +153,17 @@ class HistogramStore
     //!@}
 
     //! Construct empty
-    HistogramStore() = default;
+    RootDataStore() = default;
 
     //! Map and initialize histograms for a sensitive detector
     void InsertSensDet(PhysVolId pv_id, CopyNumber copy_num, std::string name);
 
     //! Get histogram data for a given physical volume ID and copy number
-    SDHistograms& Find(PhysVolId pv_id, CopyNumber copy_num);
+    SensDetData& Find(PhysVolId pv_id, CopyNumber copy_num);
 
     //! Access full SD map
-    std::map<SensDetId, SDHistograms>& Map() { return sensdet_map_; }
+    std::map<SensDetId, SensDetData>& Map() { return sensdet_map_; }
 
   private:
-    std::map<SensDetId, SDHistograms> sensdet_map_;
+    std::map<SensDetId, SensDetData> sensdet_map_;
 };

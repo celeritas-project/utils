@@ -7,6 +7,7 @@
 #include "EventAction.hh"
 
 #include <G4Event.hh>
+#include <RootIO.hh>
 #include <corecel/io/Logger.hh>
 
 #include "JsonReader.hh"
@@ -32,5 +33,25 @@ void EventAction::BeginOfEventAction(G4Event const* event)
     if (auto const id = event->GetEventID(); id % log_progress_ == 0)
     {
         CELER_LOG_LOCAL(status) << "Begin event " << id;
+    }
+
+    auto& sd_store = RootIO::Instance()->Histograms();
+    for (auto& [ids, data] : sd_store.Map())
+    {
+        data.total_edep = 0;  // Reset energy deposition for this event
+    }
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Thread-local end of event action.
+ */
+void EventAction::EndOfEventAction(G4Event const* event)
+{
+    // Fill histogram with total energy deposited in each SD
+    auto& sd_store = RootIO::Instance()->Histograms();
+    for (auto& [ids, data] : sd_store.Map())
+    {
+        data.total_energy_deposition.Fill(data.total_edep);
     }
 }

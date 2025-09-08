@@ -40,9 +40,9 @@ set(SOURCES
   src/ActionInitialization.cc
   src/DetectorConstruction.cc
   src/EventAction.cc
-  src/HistogramStore.cc
   src/JsonReader.cc
   src/PrimaryGeneratorAction.cc
+  src/RootDataStore.cc
   src/RootIO.cc
   src/RunAction.cc
   src/SensitiveDetector.cc
