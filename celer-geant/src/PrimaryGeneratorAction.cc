@@ -21,7 +21,15 @@
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
     CELER_EXPECT(event);
-    auto pg = JsonReader::Instance().at("particle_gun");
+    auto const& json = JsonReader::Instance();
+    JsonReader::Validate(json, "particle_gun");
+
+    auto const& pg = json.at("particle_gun");
+    JsonReader::Validate(pg, "pdg");
+    JsonReader::Validate(pg, "energy");
+    JsonReader::Validate(pg, "vertex");
+    JsonReader::Validate(pg, "direction");
+
     auto const pdg = pg.at("pdg").get<int>();
     auto const energy = pg.at("energy").get<double>();
     G4ThreeVector vertex(pg.at("vertex")[0].get<double>(),

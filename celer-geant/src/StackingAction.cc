@@ -18,7 +18,8 @@
  */
 StackingAction::StackingAction() : G4UserStackingAction()
 {
-    auto& json = JsonReader::Instance().at("celeritas");
+    JsonReader::Validate(JsonReader::Instance(), "celeritas");
+    auto const& json = JsonReader::Instance().at("celeritas");
     if (json.contains("offload_particles"))
     {
         valid_pdgs_ = json.at("offload_particles").get<std::vector<PDG>>();

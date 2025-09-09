@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include <string>
 #include <nlohmann/json.hpp>
 
 //---------------------------------------------------------------------------//
@@ -22,6 +23,13 @@ class JsonReader
 
     //! Instance singleton with json parser
     static nlohmann::json& Instance();
+
+    //! Validate JSON entry
+    static void Validate(nlohmann::json const& j, std::string name);
+
+    //! Validate JSON histogram entry
+    static void
+    ValidateHistogram(nlohmann::json const& j, std::string hist_name);
 
   private:
     // Json parser

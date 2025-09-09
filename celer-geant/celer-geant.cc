@@ -41,6 +41,8 @@ int main(int argc, char* argv[])
     // Load and verify input file
     JsonReader::Construct(argv[1]);
     auto const& json = JsonReader::Instance();
+
+    JsonReader::Validate(json, "num_threads");
     auto const num_threads = json.at("num_threads").get<size_t>();
     CELER_VALIDATE(num_threads > 0, << "Number of threads must be positive");
 
@@ -65,15 +67,17 @@ int main(int argc, char* argv[])
     run_manager->SetUserInitialization(physics.release());
 
     // Initialize geometry and actions
+    JsonReader::Validate(json, "geometry");
     run_manager->SetUserInitialization(
         new DetectorConstruction(json.at("geometry").get<std::string>()));
     run_manager->SetUserInitialization(new ActionInitialization());
 
     // Run events
-    auto const num_events
-        = json.at("particle_gun").at("num_events").get<size_t>();
+    JsonReader::Validate(json, "particle_gun");
+    auto const& json_pg = json.at("particle_gun");
+    JsonReader::Validate(json_pg, "num_events");
+    auto const num_events = json_pg.at("num_events").get<size_t>();
     CELER_VALIDATE(num_events, << "Number of events must be positive");
-
     run_manager->Initialize();
     run_manager->BeamOn(num_events);
 

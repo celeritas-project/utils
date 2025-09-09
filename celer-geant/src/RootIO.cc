@@ -55,8 +55,9 @@ RootIO::RootIO()
     CELER_VALIDATE(G4Threading::IsWorkerThread(),
                    << "Must be constructed on worker thread");
 
-    auto json = JsonReader::Instance();
-    auto filename = json.at("root_output").get<std::string>();
+    auto const& json = JsonReader::Instance();
+    JsonReader::Validate(json, "root_output");
+    auto const filename = json.at("root_output").get<std::string>();
     CELER_VALIDATE(!filename.empty(), << "ROOT filename must be non-empty");
 
     // Append thread ID to filename
@@ -123,6 +124,11 @@ void RootIO::StoreDiagnostics(std::string diagnostics)
 void RootIO::Finalize()
 {
 #define RIO_HIST_WRITE(MEMBER) data.MEMBER.Write();
+#define RIO_HIST_NORMALIZE_AND_WRITE(MEMBER) \
+    {                                        \
+        data.MEMBER.Scale(1. / num_events);  \
+        data.MEMBER.Write();                 \
+    }
 
     // Used for normalization
     auto const num_events = JsonReader::Instance()
@@ -138,18 +144,19 @@ void RootIO::Finalize()
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());
         hist_sd_dir->cd();
 
-        data.energy_dep.Scale(1. / num_events);  // Normalize histogram
-        RIO_HIST_WRITE(energy_dep);
-        RIO_HIST_WRITE(step_len);
-        RIO_HIST_WRITE(pos_x);
-        RIO_HIST_WRITE(pos_xy);
-        RIO_HIST_WRITE(time);
-        RIO_HIST_WRITE(costheta);
-        RIO_HIST_WRITE(total_energy_dep);
+        RIO_HIST_NORMALIZE_AND_WRITE(energy_dep_x)
+        RIO_HIST_NORMALIZE_AND_WRITE(energy_dep_y)
+        RIO_HIST_NORMALIZE_AND_WRITE(energy_dep_z)
+        RIO_HIST_WRITE(total_energy_dep)
+        RIO_HIST_WRITE(step_len)
+        RIO_HIST_WRITE(pos_xy)
+        RIO_HIST_WRITE(time)
+        RIO_HIST_WRITE(costheta)
     }
     CELER_LOG_LOCAL(info) << "Wrote Geant4 ROOT output to \""
                           << file_->GetName() << "\"";
     file_->Close();
 
 #undef RIO_HIST_WRITE
+#undef RIO_HIST_NORMALIZE_AND_WRITE
 }

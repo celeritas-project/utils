@@ -59,27 +59,26 @@ celeritas::SetupOptions MakeCelerOptions()
     using PDG = int;
     using VecPDG = std::vector<PDG>;
 
-    auto& json = JsonReader::Instance().at("celeritas");
-
-#define SO_VALIDATE_SIZET(NAME) \
-    CELER_VALIDATE(NAME > 0, << "'" << #NAME << "' must be positive");
+    JsonReader::Validate(JsonReader::Instance(), "celeritas");
+    auto const& json = JsonReader::Instance().at("celeritas");
 
     celeritas::SetupOptions opts;
+    JsonReader::Validate(json, "max_num_tracks");
     opts.max_num_tracks = json.at("max_num_tracks").get<size_t>();
-    SO_VALIDATE_SIZET(opts.max_num_tracks);
+
+    JsonReader::Validate(json, "initializer_capacity");
     opts.initializer_capacity = json.at("initializer_capacity").get<size_t>();
-    SO_VALIDATE_SIZET(opts.initializer_capacity);
+
     if (json.contains("offload_particles"))
     {
         opts.offload_particles
             = from_pdgs(json.at("offload_particles").get<VecPDG>());
     }
+
     opts.sd.ignore_zero_deposition = false;
 
     // Set along-step factory with zero field
     opts.make_along_step = celeritas::UniformAlongStepFactory();
 
     return opts;
-
-#undef SO_VALIDATE_SIZET
 }

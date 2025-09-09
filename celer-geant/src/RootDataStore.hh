@@ -2,7 +2,7 @@
 // Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file src/RootDataStore.hh
+//! \file celer-geant/src/RootDataStore.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
@@ -26,18 +26,19 @@ struct SensDetData
 
     //!@{
     //! ROOT histograms
-    TH1D energy_dep;
-    TH1D step_len;
-    TH1D pos_x;
-    TH2D pos_xy;
-    TH1D time;
+    TH1D energy_dep_x;  //!< Step energy deposition along x-axis
+    TH1D energy_dep_y;  //!< Step energy deposition along y-axis
+    TH1D energy_dep_z;  //!< Step energy deposition along z-axis
+    TH1D total_energy_dep;  //!< Total energy deposited in this SD
+    TH1D step_len;  //!< Step length
+    TH2D pos_xy;  //!< Pre-step position in (x, y) plane
+    TH1D time;  //!< Pre-step global time
     TH1D costheta;  //!< Pre/post step direction dot product
-    TH1D total_energy_dep;  //!< Fill(total_edep) at ::EndOfEventAction
     //!@}
 
     //!@{
     //! User-defined data
-    // Accumulate at every step
+    // Accumulated at every step, used at ::EndOfEventAction to fill histogram
     double total_edep{};
     //!@}
 
@@ -52,28 +53,19 @@ struct SensDetData
             double max;
         };
 
-        // Load HistDef info from JSON input
+        // Populate HistDef object from JSON (used by 1D and 2D histograms)
         auto from_json
             = [](nlohmann::json const& j, std::string name) -> HistDef {
-            CELER_VALIDATE(j.contains(name),
-                           << "Missing '" << name << "' in JSON input.");
-            auto jx = j.at(name);
-            CELER_VALIDATE(jx.contains("num_bins"),
-                           << "Histogram \"" << name
-                           << "\": missing \"nbins\" in JSON input.");
-            CELER_VALIDATE(jx.contains("min"),
-                           << "Histogram \"" << name
-                           << "\": missing \"min\" in JSON input.");
-            CELER_VALIDATE(jx.contains("max"),
-                           << "Histogram \"" << name
-                           << "\": missing \"max\" in JSON input.");
-            HistDef h;
-            h.nbins = jx.at("num_bins").get<size_t>();
-            h.min = jx.at("min").get<double>();
-            h.max = jx.at("max").get<double>();
-            return h;
+            JsonReader::ValidateHistogram(j, name.c_str());
+            HistDef hist_def;
+            auto const& jh = j.at(name);
+            hist_def.nbins = jh.at("num_bins").get<size_t>();
+            hist_def.min = jh.at("min").get<double>();
+            hist_def.max = jh.at("max").get<double>();
+            return hist_def;
         };
 
+        JsonReader::Validate(JsonReader::Instance(), "histograms");
         auto const& json_hist = JsonReader::Instance().at("histograms");
 
 #define SDH_INIT_TH1D(HIST)                                                  \
@@ -102,13 +94,14 @@ struct SensDetData
         //// Initialie histograms ////
         SensDetData result;
         result.sd_name = sd_name;
-        SDH_INIT_TH1D(energy_dep);
-        SDH_INIT_TH1D(step_len);
-        SDH_INIT_TH1D(pos_x);
-        SDH_INIT_TH2D(pos_xy);
-        SDH_INIT_TH1D(time);
-        SDH_INIT_TH1D(costheta);
-        SDH_INIT_TH1D(total_energy_dep);
+        SDH_INIT_TH1D(energy_dep_x)
+        SDH_INIT_TH1D(energy_dep_y)
+        SDH_INIT_TH1D(energy_dep_z)
+        SDH_INIT_TH1D(total_energy_dep)
+        SDH_INIT_TH1D(step_len)
+        SDH_INIT_TH2D(pos_xy)
+        SDH_INIT_TH1D(time)
+        SDH_INIT_TH1D(costheta)
         return result;
 
 #undef SDH_INIT_TH1D

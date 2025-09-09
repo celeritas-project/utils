@@ -23,7 +23,8 @@ SensitiveDetector::SensitiveDetector(std::string sd_name)
     CELER_VALIDATE(!sd_name.empty(),
                    << "must provide a valid sensitive detector name");
 
-    auto& json = JsonReader::Instance().at("celeritas");
+    JsonReader::Validate(JsonReader::Instance(), "celeritas");
+    auto const& json = JsonReader::Instance().at("celeritas");
     if (json.contains("offload_particles"))
     {
         valid_pdgs_ = json.at("offload_particles").get<std::vector<PDG>>();
@@ -61,18 +62,13 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     auto& data = rio->Histograms().Find(phys_vol->GetInstanceID(),
                                         phys_vol->GetCopyNo());
 
-    auto to_array
-        = [](CLHEP::Hep3Vector const& inp) -> celeritas::Array<double, 3> {
-        return celeritas::Array<double, 3>{inp.x(), inp.y(), inp.z()};
-    };
-
 #define SD_1D_FILL(MEMBER, VALUE) data.MEMBER.Fill(VALUE);
 #define SD_2D_FILL(MEMBER, X, Y) data.MEMBER.Fill(X, Y);
-#define SD_1D_FILL_WEIGHT(MEMBER, VALUE, W)         \
-    {                                               \
-        auto& h = data.MEMBER;                      \
-        auto const i = h.FindBin(VALUE);            \
-        h.SetBinContent(i, h.GetBinContent(i) + W); \
+#define SD_1D_FILL_WEIGHT(MEMBER, VALUE, WEIGHT)         \
+    {                                                    \
+        auto& h = data.MEMBER;                           \
+        auto const i = h.FindBin(VALUE);                 \
+        h.SetBinContent(i, h.GetBinContent(i) + WEIGHT); \
     }
 
     auto const& pre_pos = pre->GetPosition() / cm;
@@ -82,26 +78,31 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     // Add total energy deposit for this event for this SD
     data.total_edep += edep;
 
-    SD_1D_FILL_WEIGHT(energy_dep, pre_pos.z(), edep);
-    SD_1D_FILL(step_len, step->GetStepLength());
-    SD_1D_FILL(pos_x, pre_pos.z());
-    SD_2D_FILL(pos_xy, pre_pos.x(), pre_pos.y());
-    SD_1D_FILL(time, pre->GetGlobalTime());
+    SD_1D_FILL_WEIGHT(energy_dep_x, pre_pos.x(), edep)
+    SD_1D_FILL_WEIGHT(energy_dep_y, pre_pos.y(), edep)
+    SD_1D_FILL_WEIGHT(energy_dep_z, pre_pos.z(), edep)
+    SD_1D_FILL(step_len, len)
+    SD_2D_FILL(pos_xy, pre_pos.x(), pre_pos.y())
+    SD_1D_FILL(time, pre->GetGlobalTime())
 
-    auto is_position_different
-        = [](G4ThreeVector const& a, G4ThreeVector const& b) -> bool {
-        return a.x() != b.x() || a.y() != b.y() || a.z() != b.z();
+    auto is_equal = [](G4ThreeVector const& a, G4ThreeVector const& b) -> bool {
+        return a.x() == b.x() && a.y() == b.y() && a.z() == b.z();
+    };
+    auto to_array
+        = [](CLHEP::Hep3Vector const& inp) -> celeritas::Array<double, 3> {
+        return celeritas::Array<double, 3>{inp.x(), inp.y(), inp.z()};
     };
 
-    if (is_position_different(track->GetVertexPosition(), pre->GetPosition()))
+    if (!is_equal(track->GetVertexPosition(), pre->GetPosition()))
     {
-        // This is a hack to have a valid post-step point without using
-        // track->GetCurrentStepNumber(), which is not available from Celeritas
+        // This is a hack to have a valid post-step point.
+        // Ideally we would do track->GetCurrentStepNumber() > 0, but this
+        // information is not available in Celeritas
         auto* post = step->GetPostStepPoint();
         CELER_ASSERT(post);
-        auto const& pre_dir = to_array(pre->GetMomentumDirection());
-        auto const& post_dir = to_array(post->GetMomentumDirection());
-        SD_1D_FILL(costheta, celeritas::dot_product(pre_dir, post_dir));
+        auto const pre_dir = to_array(pre->GetMomentumDirection());
+        auto const post_dir = to_array(post->GetMomentumDirection());
+        SD_1D_FILL(costheta, celeritas::dot_product(pre_dir, post_dir))
     }
 
     return true;

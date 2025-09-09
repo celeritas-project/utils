@@ -26,7 +26,7 @@ EventAction::EventAction() : G4UserEventAction()
 
 //---------------------------------------------------------------------------//
 /*!
- * Thread-local begin of event action: log event start.
+ * Thread-local begin of event action.
  */
 void EventAction::BeginOfEventAction(G4Event const* event)
 {
@@ -35,10 +35,11 @@ void EventAction::BeginOfEventAction(G4Event const* event)
         CELER_LOG_LOCAL(status) << "Begin event " << id;
     }
 
+    // Reset energy deposition for this event
     auto& sd_store = RootIO::Instance()->Histograms();
     for (auto& [ids, data] : sd_store.Map())
     {
-        data.total_edep = 0;  // Reset energy deposition for this event
+        data.total_edep = 0;
     }
 }
 

@@ -38,6 +38,39 @@ nlohmann::json& JsonReader::Instance()
 }
 
 //---------------------------------------------------------------------------//
+/*!
+ * Validate JSON input parameter.
+ */
+void JsonReader::Validate(nlohmann::json const& j, std::string name)
+{
+    CELER_VALIDATE(j.contains(name),
+                   << "Missing \"" << name << "\" in JSON input.");
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Validate JSON histogram input data.
+ */
+void JsonReader::ValidateHistogram(nlohmann::json const& j,
+                                   std::string hist_name)
+{
+    JsonReader::Validate(j, hist_name);
+    auto const& jh = j.at(hist_name);
+
+#define JR_HIST_VALIDATE(MEMBER)                                           \
+    CELER_VALIDATE(jh.contains(#MEMBER),                                   \
+                   << "In \"" << j.type_name() << " \": histogram data \"" \
+                   << hist_name << "\" is missing \"" << #MEMBER           \
+                   << "\" in JSON input.");
+
+    JR_HIST_VALIDATE(num_bins)
+    JR_HIST_VALIDATE(min)
+    JR_HIST_VALIDATE(max)
+
+#undef JR_HIST_VALIDATE
+}
+
+//---------------------------------------------------------------------------//
 // PRIVATE
 //---------------------------------------------------------------------------//
 /*!

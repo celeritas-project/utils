@@ -26,7 +26,7 @@ void RunAction::BeginOfRunAction(G4Run const* run)
     if (G4Threading::IsWorkerThread())
     {
         // Construct thread-local ROOT I/O
-        // Initialization at RunAction ensures geometry/SD data is available
+        // Initialization at begin of run ensures valid geometry and SD data
         RootIO::Instance();
     }
 }
