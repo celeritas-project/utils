@@ -18,17 +18,30 @@ $ make
 $ ./celer-geant input.json
 ```
 
-# Adding new histograms
+# Input
+
+See `input-example.json`.  
+Keys `"offload_particles"` and `"log_progress"` are optional.
+
+# I/O
+`RootIO` is a thread-local singleton that owns a `RootDataStore` object, which
+maps all sensitive detector data. Each worker-thread generates its own ROOT
+output file with the thread ID appended to the filename. If you prefer to merge
+all files into a single output, you can use ROOT's `hadd` command:
+```sh
+$ hadd [merged-output.root] [output-0.root output-1.root ...]
+```
+Selecting all thread IDs (`*`) also works:
+```sh
+$ hadd [merged-output.root] [output-*.root]
+```
+
+## Adding new histograms
 
 - Expand JSON with new histogram information.
 - `RootDataStore.hh`: Add histogram to `SensDetData` and initialize it in
-  `SensDetData::Initialize`.
+  `SensDetData::Initialize` using the `SDH_INIT_[TH1D/TH2D]` macros.
+  - `TH2D` histograms require `"x"` and `"y"` keys for each axis binning.
 - Fill histogram (usually via `SensitiveDetector::ProcessHits`).
 - `RootIO.cc`: Write histogram to disk during `RootIO::Finalize` using
-  `RIO_HIST_WRITE`.
-
-# I/O
-Since `RootIO` is a thread-local singleton that owns a `RootDataStore` object,
-which maps all sensitive detector data, it can be used as a starting point to
-expand it to a more comprehensive I/O system that manages more complex data and
-different output types. 
+  `RIO_HIST_WRITE` macro.

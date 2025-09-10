@@ -5,11 +5,14 @@
         "max_num_tracks": 1,
         "initializer_capacity": 500,
         "offload_particles": [
+            11,
+            -11,
+            22,
             13,
             -13
         ]
     },
-    "num_threads": 1,
+    "num_threads": 5,
     "log_progress": 10,
     "particle_gun": {
         "num_events": 100,

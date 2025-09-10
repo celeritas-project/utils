@@ -36,9 +36,9 @@ celeritas::SetupOptions::VecG4PD from_pdgs(std::vector<int> input)
     };
 
     CELER_VALIDATE(!input.empty(),
-                   << "'offload_particles' is present but "
-                      "empty. Remove it to use Celeritas "
-                      "default list of offloaded particles.");
+                   << "Celeritas \"offload_particles\" option is present but "
+                      "empty. Specify PDGs or remove it to use the Celeritas "
+                      "default list.");
     celeritas::SetupOptions::VecG4PD result;
     for (auto pdg : input)
     {
@@ -73,6 +73,12 @@ celeritas::SetupOptions MakeCelerOptions()
     {
         opts.offload_particles
             = from_pdgs(json.at("offload_particles").get<VecPDG>());
+    }
+    else
+    {
+        CELER_LOG(info)
+            << "Celeritas' \"offload_particles\" option not present. "
+               "Using default list.";
     }
 
     opts.sd.ignore_zero_deposition = false;

@@ -39,7 +39,7 @@ nlohmann::json& JsonReader::Instance()
 
 //---------------------------------------------------------------------------//
 /*!
- * Validate JSON input parameter.
+ * Throw run-time error if JSON key is not present.
  */
 void JsonReader::Validate(nlohmann::json const& j, std::string name)
 {
@@ -49,7 +49,7 @@ void JsonReader::Validate(nlohmann::json const& j, std::string name)
 
 //---------------------------------------------------------------------------//
 /*!
- * Validate JSON histogram input data.
+ * Throw run-time error if JSON histogram keys are not present.
  */
 void JsonReader::ValidateHistogram(nlohmann::json const& j,
                                    std::string hist_name)

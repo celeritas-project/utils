@@ -12,8 +12,12 @@
 //---------------------------------------------------------------------------//
 /*!
  * Singleton \e nlohmann/json parser.
+ *
  * Use \c JsonReader::Construct("input.json") to construct the singleton, and
- * \c JsonReader::Instance() to access it from any class.
+ * \c JsonReader::Instance() to access it.
+ *
+ * \c Validate and \c ValidateHistogram are helper functions that call
+ * \c CELER_VALIDATE on JSON input parameters.
  */
 class JsonReader
 {
@@ -24,15 +28,15 @@ class JsonReader
     //! Instance singleton with json parser
     static nlohmann::json& Instance();
 
-    //! Validate JSON entry
+    //! Throw run-time error if key is not present
     static void Validate(nlohmann::json const& j, std::string name);
 
-    //! Validate JSON histogram entry
+    //! Throw run-time error if JSON histogram keys are not present
     static void
     ValidateHistogram(nlohmann::json const& j, std::string hist_name);
 
   private:
-    // Json parser
+    // JSON parser
     nlohmann::json json_;
 
     // Construct with filename
