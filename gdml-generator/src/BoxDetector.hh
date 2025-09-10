@@ -9,9 +9,9 @@
 #pragma once
 
 #include <string>
-#include <G4VUserDetectorConstruction.hh>
 #include <G4Material.hh>
 #include <G4VPhysicalVolume.hh>
+#include <G4VUserDetectorConstruction.hh>
 
 //---------------------------------------------------------------------------//
 /*!
@@ -25,6 +25,7 @@ class BoxDetector : public G4VUserDetectorConstruction
 
     // Construct geometry
     G4VPhysicalVolume* Construct() final;
+
     // Set up sensitive detectors and magnetic field
     void ConstructSDandField() final;
 
