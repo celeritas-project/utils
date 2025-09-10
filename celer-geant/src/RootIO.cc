@@ -21,11 +21,11 @@ namespace
 {
 //---------------------------------------------------------------------------//
 /*!
- * Ensure ROOT thread-safety before construction.
+ * Trigger ROOT thread-safety before construction.
  *
- * \c ROOT::EnableThreadSafety() must be triggered before the thread starts.
+ * \c ROOT::EnableThreadSafety() must be called before the thread starts.
  */
-auto enable_root_thread_safety = []() -> int {
+auto root_enable_thread_safety = []() -> int {
     ROOT::EnableThreadSafety();
     return 0;
 }();
@@ -34,7 +34,7 @@ auto enable_root_thread_safety = []() -> int {
 
 //---------------------------------------------------------------------------//
 /*!
- * Return the static thread local singleton instance.
+ * Return the static thread-local singleton instance.
  */
 RootIO* RootIO::Instance()
 {
@@ -73,6 +73,8 @@ RootIO::RootIO()
 
     // Map physical volumes to be scored
     auto const& physvol_store = *G4PhysicalVolumeStore::GetInstance();
+    CELER_ASSERT(!physvol_store.empty());
+
     CELER_LOG_LOCAL(status) << "Mapping sensitive detectors for I/O";
     for (auto const& physvol : physvol_store)
     {
@@ -92,12 +94,19 @@ RootIO::RootIO()
         std::string str_pid_copynum = std::to_string(pid) + "_"
                                       + std::to_string(copy_num);
         std::string sd_name = name + "_" + str_pid_copynum;
-        hist_store_.InsertSensDet(pid, copy_num, sd_name);
+        data_store_.InsertSensDet(pid, copy_num, sd_name);
 
         CELER_LOG(debug) << "Mapped " << name << " with instance ID " << pid
                          << " and copy number " << copy_num
                          << " as sensitive detector";
     }
+
+    CELER_VALIDATE(!data_store_.Map().empty(),
+                   << "No sensitive detectors mapped. Geometry has no "
+                      "\"SensDet\" auxiliary data or RootIO::Instance() was "
+                      "called before ::BeginOfRunAction.");
+
+    CELER_LOG_LOCAL(status) << "Past validate";
 }
 
 //---------------------------------------------------------------------------//
@@ -138,7 +147,7 @@ void RootIO::Finalize()
 
     std::string const hist_folder = "histograms/";
 
-    for (auto& [ids, data] : hist_store_.Map())
+    for (auto& [ids, data] : data_store_.Map())
     {
         std::string dir_name = hist_folder + data.sd_name;
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());

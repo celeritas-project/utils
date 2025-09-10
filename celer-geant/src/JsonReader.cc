@@ -57,11 +57,10 @@ void JsonReader::ValidateHistogram(nlohmann::json const& j,
     JsonReader::Validate(j, hist_name);
     auto const& jh = j.at(hist_name);
 
-#define JR_HIST_VALIDATE(MEMBER)                                           \
-    CELER_VALIDATE(jh.contains(#MEMBER),                                   \
-                   << "In \"" << j.type_name() << " \": histogram data \"" \
-                   << hist_name << "\" is missing \"" << #MEMBER           \
-                   << "\" in JSON input.");
+#define JR_HIST_VALIDATE(MEMBER)                                        \
+    CELER_VALIDATE(jh.contains(#MEMBER),                                \
+                   << "Histogram \"" << hist_name << "\" is missing \"" \
+                   << #MEMBER << "\" in JSON input.");
 
     JR_HIST_VALIDATE(num_bins)
     JR_HIST_VALIDATE(min)

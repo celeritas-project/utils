@@ -7,6 +7,7 @@
 #include "RunAction.hh"
 
 #include <G4Threading.hh>
+#include <accel/ExceptionConverter.hh>
 #include <accel/TrackingManagerIntegration.hh>
 #include <celeritas/global/CoreParams.hh>
 #include <corecel/io/Logger.hh>
@@ -27,7 +28,10 @@ void RunAction::BeginOfRunAction(G4Run const* run)
     {
         // Construct thread-local ROOT I/O
         // Initialization at begin of run ensures valid geometry and SD data
-        RootIO::Instance();
+        // celeritas::ExceptionConverter avoids Geant4 not throwing exceptions
+        CELER_TRY_HANDLE(RootIO::Instance(),
+                         celeritas::ExceptionConverter{"celer-geant."
+                                                       "beginrun"});
     }
 }
 

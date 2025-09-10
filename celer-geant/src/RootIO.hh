@@ -31,7 +31,7 @@ class RootIO
     static RootIO* Instance();
 
     //! Get reference to thread-local Histogram data
-    RootDataStore& Histograms() { return hist_store_; }
+    RootDataStore& Histograms() { return data_store_; }
 
     //! Store OutputRegistry diagnostics
     void StoreDiagnostics(std::string diagnostics);
@@ -43,7 +43,7 @@ class RootIO
     //// DATA ////
 
     TFile* file_;
-    RootDataStore hist_store_;
+    RootDataStore data_store_;
 
     //// HELPER FUNCTIONS ////
 

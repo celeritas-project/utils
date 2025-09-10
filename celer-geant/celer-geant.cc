@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 
     std::unique_ptr<G4RunManager> run_manager;
     run_manager.reset(
-        G4RunManagerFactory::CreateRunManager(G4RunManagerType::Default));
+        G4RunManagerFactory::CreateRunManager(G4RunManagerType::MT));
     run_manager->SetNumberOfThreads(num_threads);
 
     // Initialize Celeritas
