@@ -105,8 +105,6 @@ RootIO::RootIO()
                    << "No sensitive detectors mapped. Geometry has no "
                       "\"SensDet\" auxiliary data or RootIO::Instance() was "
                       "called before ::BeginOfRunAction.");
-
-    CELER_LOG_LOCAL(status) << "Past validate";
 }
 
 //---------------------------------------------------------------------------//

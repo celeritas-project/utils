@@ -91,16 +91,18 @@ void MuonFusionPhysics::ConstructProcess()
                                                        "mu-"));
 
     // Limit step size of mu- so we can accurately track its trajectory in the
-    // magentic field
+    // magnetic field
     muonMinusProcessManager->AddDiscreteProcess(new G4StepLimiter());
 
     // ********** Muonic Atom Processes
 
+    auto* generic_muonic_atom = G4GenericMuonicAtom::GenericMuonicAtom();
     G4ProcessManager* genericMuonicAtomProcessManager
-        = G4GenericMuonicAtom::GenericMuonicAtom()->GetProcessManager();
+        = generic_muonic_atom->GetProcessManager();
 
     // Muonic Atom Decay
-    genericMuonicAtomProcessManager->AddRestProcess(new G4MuonicAtomDecay());
+    // genericMuonicAtomProcessManager->AddRestProcess(new
+    // G4MuonicAtomDecay());
 
     // Muon Catalyzed Fusion
     genericMuonicAtomProcessManager->AddRestProcess(
@@ -111,15 +113,16 @@ void MuonFusionPhysics::ConstructProcess()
         new MuonCatalyzedTTFusion());
 
     // Spin flip for muonic deuterium from spin=3/2 to spin=1/2
-    genericMuonicAtomProcessManager->AddRestProcess(new MuonicAtomSpinFlip());
+    // genericMuonicAtomProcessManager->AddRestProcess(new
+    // MuonicAtomSpinFlip());
 
     // Muon Transfer (TODO check and add)
-    genericMuonicAtomProcessManager->AddRestProcess(new MuonicAtomTransfer());
+    // genericMuonicAtomProcessManager->AddRestProcess(new
+    // MuonicAtomTransfer());
 
     // Muon Stripping from MuHe3 and MuHe4
-    MuonStripping* fMuonStripping = new MuonStripping();
-    genericMuonicAtomProcessManager->AddDiscreteProcess(fMuonStripping);
-    // fMuonStripping->PrintCrossSectionTable(); // TODO remove
+    // genericMuonicAtomProcessManager->AddDiscreteProcess(new
+    // MuonStripping());
 
     // Add basic electromagnetic physics processes for muonic atoms
     // TODO make sure multiple scattering for muonic atom is using the correct
@@ -132,12 +135,8 @@ void MuonFusionPhysics::ConstructProcess()
 
     G4PhysicsListHelper* ph = G4PhysicsListHelper::GetPhysicsListHelper();
 
-    // ph->RegisterProcess(fMuonStripping,
-    // G4GenericMuonicAtom::GenericMuonicAtom());
-
-    ph->RegisterProcess(new G4ionIonisation(),
-                        G4GenericMuonicAtom::GenericMuonicAtom());
-    ph->RegisterProcess(new G4hMultipleScattering(),
-                        G4GenericMuonicAtom::GenericMuonicAtom());
-    G4GenericMuonicAtom::GenericMuonicAtom()->GetProcessManager()->DumpInfo();
+    // ph->RegisterProcess(fMuonStripping, generic_muonic_atom);
+    ph->RegisterProcess(new G4ionIonisation(), generic_muonic_atom);
+    ph->RegisterProcess(new G4hMultipleScattering(), generic_muonic_atom);
+    // generic_muonic_atom->GetProcessManager()->DumpInfo();
 }
