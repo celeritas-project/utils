@@ -12,6 +12,7 @@
 #include <G4RunManagerFactory.hh>
 #include <G4Threading.hh>
 #include <G4UImanager.hh>
+#include <QGSP_BIC.hh>
 #include <accel/TrackingManagerConstructor.hh>
 #include <accel/TrackingManagerIntegration.hh>
 #include <celeritas/ext/EmPhysicsList.hh>
@@ -21,6 +22,7 @@
 #include "DetectorConstruction.hh"
 #include "JsonReader.hh"
 #include "MakeCelerOptions.hh"
+#include "MuonFusionPhysics/MuonFusionPhysics.hh"
 #include "RootIO.hh"
 
 //---------------------------------------------------------------------------//
@@ -62,7 +64,9 @@ int main(int argc, char* argv[])
     phys_opts.muon = MuonPhysicsOptions{};
     phys_opts.muon.msc = celeritas::MscModelSelection::none;
 
-    auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
+    // auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
+    auto physics = std::make_unique<QGSP_BIC>(0);
+    physics->RegisterPhysics(new MuonFusionPhysics());
     physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
     run_manager->SetUserInitialization(physics.release());
 

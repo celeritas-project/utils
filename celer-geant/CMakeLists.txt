@@ -49,9 +49,22 @@ set(SOURCES
   src/StackingAction.cc
 )
 
+set(MUCF_PHYSICS
+  src/MuonFusionPhysics/MuonCatalyzedDDFusion.cc
+  src/MuonFusionPhysics/MuonCatalyzedDTFusion.cc
+  src/MuonFusionPhysics/MuonCatalyzedTTFusion.cc
+  src/MuonFusionPhysics/MuonFusionPhysics.cc
+  src/MuonFusionPhysics/MuonicAtomSpinFlip.cc
+  src/MuonFusionPhysics/MuonicAtomTransfer.cc
+  src/MuonFusionPhysics/MuonMinusAtomicCapture.cc
+  src/MuonFusionPhysics/MuonStripping.cc
+  src/MuonFusionPhysics/VMuonCatalyzedFusionProcess.cc
+)
+
 add_executable(celer-geant
   celer-geant.cc
   ${SOURCES}
+  ${MUCF_PHYSICS}
 )
 
 target_include_directories(celer-geant PRIVATE
