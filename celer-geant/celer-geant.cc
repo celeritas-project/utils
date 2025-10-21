@@ -7,8 +7,6 @@
 //---------------------------------------------------------------------------//
 #include <iostream>
 #include <memory>
-#include <G4Electron.hh>
-#include <G4Positron.hh>
 #include <G4RunManagerFactory.hh>
 #include <G4Threading.hh>
 #include <G4UImanager.hh>
@@ -24,6 +22,13 @@
 #include "MakeCelerOptions.hh"
 #include "MuonFusionPhysics/MuonFusionPhysics.hh"
 #include "RootIO.hh"
+
+std::unique_ptr<QGSP_BIC> mucf_physics()
+{
+    auto physics = std::make_unique<QGSP_BIC>(0);
+    physics->RegisterPhysics(new MuonFusionPhysics());
+    return physics;
+}
 
 //---------------------------------------------------------------------------//
 /*!
@@ -60,13 +65,12 @@ int main(int argc, char* argv[])
     // Initialize physics with Celeritas offload
     using PhysicsOptions = celeritas::GeantPhysicsOptions;
     using MuonPhysicsOptions = celeritas::GeantMuonPhysicsOptions;
-    auto phys_opts = PhysicsOptions::deactivated();
-    phys_opts.muon = MuonPhysicsOptions{};
-    phys_opts.muon.msc = celeritas::MscModelSelection::none;
 
+    // phys_opts.muon = MuonPhysicsOptions{};
+    // phys_opts.muon.msc = celeritas::MscModelSelection::none;
     // auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
-    auto physics = std::make_unique<QGSP_BIC>(0);
-    physics->RegisterPhysics(new MuonFusionPhysics());
+
+    auto physics = mucf_physics();
     physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
     run_manager->SetUserInitialization(physics.release());
 

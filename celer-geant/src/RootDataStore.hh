@@ -34,12 +34,18 @@ struct SensDetData
     TH2D pos_xy;  //!< Pre-step position in (x, y) plane
     TH1D time;  //!< Pre-step global time
     TH1D costheta;  //!< Pre/post step direction dot product
+    TH1D neutron_counts;
     //!@}
 
     //!@{
     //! User-defined data
     // Accumulated at every step, used at ::EndOfEventAction to fill histogram
     double total_edep{};
+
+    // MuCF neutron counts
+    size_t num_dd_neutrons{};
+    size_t num_dt_neutrons{};
+    size_t num_tt_neutrons{};
     //!@}
 
     //! Initialize histograms using the SD name and JSON input data

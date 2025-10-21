@@ -57,6 +57,7 @@
 #include <G4ParticleDefinition.hh>
 #include <G4RandomDirection.hh>
 #include <G4SystemOfUnits.hh>
+#include <corecel/io/Logger.hh>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
@@ -74,6 +75,8 @@ MuonCatalyzedDTFusion::MuonCatalyzedDTFusion(G4String const& name)
     //  enablePostStepDoIt = false;
     SetProcessSubType(fMuAtomicCapture);
     G4HadronicProcessStore::Instance()->RegisterExtraProcess(this);
+
+    CELER_LOG_LOCAL(info) << "Construct DT mucf";
 
     // Theoretical Molecular formation rates versus temperature
     // from Faifman, M.P., Strizh, T.A., Armour, E.A.G. et al.
@@ -494,9 +497,16 @@ G4double MuonCatalyzedDTFusion::GetMeanCycleTime(G4Track const& track)
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
 G4VParticleChange*
-MuonCatalyzedDTFusion::AtRestDoIt(G4Track const& track, G4Step const&)
+MuonCatalyzedDTFusion::AtRestDoIt(G4Track const& track, G4Step const& step)
 {
     theTotalResult->Initialize(track);
+
+    CELER_LOG_LOCAL(info) << "DT mucf: "
+                          << track.GetParticleDefinition()->GetParticleName();
+    auto const post_step = step.GetPostStepPoint();
+    CELER_LOG_LOCAL(info) << "DT mucf: " << post_step->GetPosition().x() / cm
+                          << " cm and " << post_step->GetKineticEnergy()
+                          << " MeV";
 
     G4double finalGlobalTime = track.GetGlobalTime();
     G4double finalLocalTime = track.GetLocalTime();
