@@ -30,7 +30,7 @@ class RootIO
     //! Return a thread-local singleton instance
     static RootIO* Instance();
 
-    //! Get reference to thread-local Histogram data
+    //! Get reference to thread-local data
     RootDataStore& Data() { return data_store_; }
 
     //! Store OutputRegistry diagnostics
