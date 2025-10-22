@@ -49,8 +49,6 @@
 #include <G4SystemOfUnits.hh>
 #include <corecel/io/Logger.hh>
 
-#include "VMuonCatalyzedFusionProcess.hh"
-
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
 MuonCatalyzedDDFusion::MuonCatalyzedDDFusion(G4String const& name)

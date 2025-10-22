@@ -7,6 +7,7 @@
 #include "SensitiveDetector.hh"
 
 #include <G4SystemOfUnits.hh>
+#include <G4VProcess.hh>
 #include <corecel/Assert.hh>
 #include <corecel/io/Logger.hh>
 #include <corecel/math/ArrayUtils.hh>
@@ -48,7 +49,7 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     if (!this->is_pdg_valid(pd->GetPDGEncoding()))
     {
         // Do not score particles that aren't in the offload list
-        return false;
+        // return false;
     }
 
     auto* pre = step->GetPreStepPoint();
@@ -105,6 +106,31 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
         SD_1D_FILL(costheta, celeritas::dot_product(pre_dir, post_dir))
     }
 
+    auto const process_name
+        = step->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+
+    for (auto const* sec : *step->GetSecondary())
+    {
+        auto pdg = sec->GetParticleDefinition()->GetPDGEncoding();
+        if (pdg != 2112)
+        {
+            // Skip anything other than a neutron
+            continue;
+        }
+
+        if (process_name == "MuonCatalyzedDDFusion")
+        {
+            data.num_dd_neutrons++;
+        }
+        if (process_name == "MuonCatalyzedDTFusion")
+        {
+            data.num_dt_neutrons++;
+        }
+        if (process_name == "MuonCatalyzedTTFusion")
+        {
+            data.num_tt_neutrons++;
+        }
+    }
     return true;
 
 #undef SD_1D_FILL

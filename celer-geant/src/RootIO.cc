@@ -91,10 +91,7 @@ RootIO::RootIO()
         auto const name = sd->GetName();
         auto const pid = physvol->GetInstanceID();
         auto const copy_num = physvol->GetCopyNo();
-        std::string str_pid_copynum = std::to_string(pid) + "_"
-                                      + std::to_string(copy_num);
-        std::string sd_name = name + "_" + str_pid_copynum;
-        data_store_.InsertSensDet(pid, copy_num, sd_name);
+        data_store_.InsertSensDet(pid, copy_num, name);
 
         CELER_LOG(debug) << "Mapped " << name << " with instance ID " << pid
                          << " and copy number " << copy_num
@@ -147,7 +144,10 @@ void RootIO::Finalize()
 
     for (auto& [ids, data] : data_store_.Map())
     {
-        std::string dir_name = hist_folder + data.sd_name;
+        // Create unique directory name for each SD: histograms/sdname_pv_copy
+        std::string dir_name = hist_folder + data.sd_name + "_"
+                               + std::to_string(ids.physvol_id) + "_"
+                               + std::to_string(ids.copy_number);
         auto hist_sd_dir = file_->mkdir(dir_name.c_str());
         hist_sd_dir->cd();
 
@@ -159,6 +159,7 @@ void RootIO::Finalize()
         RIO_HIST_WRITE(pos_xy)
         RIO_HIST_WRITE(time)
         RIO_HIST_WRITE(costheta)
+        data.neutron_counts->Write();
     }
     CELER_LOG_LOCAL(info) << "Wrote Geant4 ROOT output to \""
                           << file_->GetName() << "\"";
