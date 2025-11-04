@@ -182,12 +182,14 @@ MuonCatalyzedTTFusion::AtRestDoIt(G4Track const& track, G4Step const& step)
 {
     theTotalResult->Initialize(track);
 
-    CELER_LOG_LOCAL(info) << "TT mucf: "
-                          << track.GetParticleDefinition()->GetParticleName();
-    auto const post_step = step.GetPostStepPoint();
-    CELER_LOG_LOCAL(info) << "DT mucf: " << post_step->GetPosition().x() / cm
-                          << " cm and " << post_step->GetKineticEnergy()
-                          << " MeV";
+    // CELER_LOG_LOCAL(info) << "TT mucf: "
+    //                       <<
+    //                       track.GetParticleDefinition()->GetParticleName();
+    // auto const post_step = step.GetPostStepPoint();
+    // CELER_LOG_LOCAL(info) << "DT mucf: " << post_step->GetPosition().x() /
+    // cm
+    //                       << " cm and " << post_step->GetKineticEnergy()
+    //                       << " MeV";
 
     G4double finalGlobalTime = track.GetGlobalTime();
     G4double finalLocalTime = track.GetLocalTime();

@@ -50,10 +50,8 @@ void RunAction::EndOfRunAction(G4Run const* run)
 
         for (auto [ids, sd] : rio->Data().Map())
         {
-            if (sd.sd_name == "target_sd")
+            if (sd.sd_name == "target_lv_sd")
             {
-                CELER_LOG_LOCAL(info) << "Fill neutron counts";
-
                 sd.neutron_counts->Fill("dd", sd.num_dd_neutrons);
                 sd.neutron_counts->Fill("dt", sd.num_dt_neutrons);
                 sd.neutron_counts->Fill("tt", sd.num_tt_neutrons);

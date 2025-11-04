@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #include "SensitiveDetector.hh"
 
+#include <G4Neutron.hh>
 #include <G4SystemOfUnits.hh>
 #include <G4VProcess.hh>
 #include <corecel/Assert.hh>
@@ -52,16 +53,27 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
         // return false;
     }
 
-    auto* pre = step->GetPreStepPoint();
-    CELER_ASSERT(pre);
-    auto& pre_th = pre->GetTouchableHandle();
-    CELER_ASSERT(pre_th);
-    auto* phys_vol = pre_th->GetVolume();
-    CELER_ASSERT(phys_vol);
+    auto const process_name
+        = step->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
 
-    auto rio = RootIO::Instance();
-    auto& data
-        = rio->Data().Find(phys_vol->GetInstanceID(), phys_vol->GetCopyNo());
+    for (auto const* sec : *step->GetSecondary())
+    {
+        if (sec->GetParticleDefinition() != G4Neutron::Definition())
+        {
+            // Skip anything other than a neutron
+            continue;
+        }
+
+        auto* pre = step->GetPreStepPoint();
+        CELER_ASSERT(pre);
+        auto& pre_th = pre->GetTouchableHandle();
+        CELER_ASSERT(pre_th);
+        auto* phys_vol = pre_th->GetVolume();
+        CELER_ASSERT(phys_vol);
+
+        auto rio = RootIO::Instance();
+        auto& data = rio->Data().Find(phys_vol->GetInstanceID(),
+                                      phys_vol->GetCopyNo());
 
 #define SD_1D_FILL(MEMBER, VALUE) data.MEMBER.Fill(VALUE);
 #define SD_2D_FILL(MEMBER, X, Y) data.MEMBER.Fill(X, Y);
@@ -72,50 +84,39 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
         h.SetBinContent(i, h.GetBinContent(i) + WEIGHT); \
     }
 
-    auto const& pre_pos = pre->GetPosition() / cm;
-    auto const len = step->GetStepLength() / cm;
-    auto const edep = step->GetTotalEnergyDeposit();
+        auto const& pre_pos = pre->GetPosition() / cm;
+        auto const len = step->GetStepLength() / cm;
+        auto const edep = step->GetTotalEnergyDeposit();
 
-    // Add total energy deposit for this event for this SD
-    data.total_edep += edep;
+        // Add total energy deposit for this event for this SD
+        data.total_edep += edep;
 
-    SD_1D_FILL_WEIGHT(energy_dep_x, pre_pos.x(), edep)
-    SD_1D_FILL_WEIGHT(energy_dep_y, pre_pos.y(), edep)
-    SD_1D_FILL_WEIGHT(energy_dep_z, pre_pos.z(), edep)
-    SD_1D_FILL(step_len, len)
-    SD_2D_FILL(pos_xy, pre_pos.x(), pre_pos.y())
-    SD_1D_FILL(time, pre->GetGlobalTime())
+        SD_1D_FILL_WEIGHT(energy_dep_x, pre_pos.x(), edep)
+        SD_1D_FILL_WEIGHT(energy_dep_y, pre_pos.y(), edep)
+        SD_1D_FILL_WEIGHT(energy_dep_z, pre_pos.z(), edep)
+        SD_1D_FILL(step_len, len)
+        SD_2D_FILL(pos_xy, pre_pos.x(), pre_pos.y())
+        SD_1D_FILL(time, pre->GetGlobalTime())
 
-    auto is_equal = [](G4ThreeVector const& a, G4ThreeVector const& b) -> bool {
-        return a.x() == b.x() && a.y() == b.y() && a.z() == b.z();
-    };
-    auto to_array
-        = [](CLHEP::Hep3Vector const& inp) -> celeritas::Array<double, 3> {
-        return celeritas::Array<double, 3>{inp.x(), inp.y(), inp.z()};
-    };
+        auto is_equal
+            = [](G4ThreeVector const& a, G4ThreeVector const& b) -> bool {
+            return a.x() == b.x() && a.y() == b.y() && a.z() == b.z();
+        };
+        auto to_array
+            = [](CLHEP::Hep3Vector const& inp) -> celeritas::Array<double, 3> {
+            return celeritas::Array<double, 3>{inp.x(), inp.y(), inp.z()};
+        };
 
-    if (!is_equal(track->GetVertexPosition(), pre->GetPosition()))
-    {
-        // This is a hack to have a valid post-step point.
-        // Ideally we would do track->GetCurrentStepNumber() > 0, but this
-        // information is not available in Celeritas
-        auto* post = step->GetPostStepPoint();
-        CELER_ASSERT(post);
-        auto const pre_dir = to_array(pre->GetMomentumDirection());
-        auto const post_dir = to_array(post->GetMomentumDirection());
-        SD_1D_FILL(costheta, celeritas::dot_product(pre_dir, post_dir))
-    }
-
-    auto const process_name
-        = step->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
-
-    for (auto const* sec : *step->GetSecondary())
-    {
-        auto pdg = sec->GetParticleDefinition()->GetPDGEncoding();
-        if (pdg != 2112)
+        if (!is_equal(track->GetVertexPosition(), pre->GetPosition()))
         {
-            // Skip anything other than a neutron
-            continue;
+            // This is a hack to have a valid post-step point.
+            // Ideally we would do track->GetCurrentStepNumber() > 0, but this
+            // information is not available in Celeritas
+            auto* post = step->GetPostStepPoint();
+            CELER_ASSERT(post);
+            auto const pre_dir = to_array(pre->GetMomentumDirection());
+            auto const post_dir = to_array(post->GetMomentumDirection());
+            SD_1D_FILL(costheta, celeritas::dot_product(pre_dir, post_dir))
         }
 
         if (process_name == "MuonCatalyzedDDFusion")

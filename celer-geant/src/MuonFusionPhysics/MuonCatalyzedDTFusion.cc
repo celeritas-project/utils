@@ -70,13 +70,12 @@ MuonCatalyzedDTFusion::MuonCatalyzedDTFusion(G4String const& name)
     ,  // Owned by InteractionRegistry
     theTotalResult(new G4ParticleChange())
 {
+    verboseLevel = 2;
     // Modify G4VProcess flags to emulate G4VRest instead of G4VDiscrete
     //  enableAtRestDoIt = true;
     //  enablePostStepDoIt = false;
     SetProcessSubType(fMuAtomicCapture);
     G4HadronicProcessStore::Instance()->RegisterExtraProcess(this);
-
-    CELER_LOG_LOCAL(info) << "Construct DT mucf";
 
     // Theoretical Molecular formation rates versus temperature
     // from Faifman, M.P., Strizh, T.A., Armour, E.A.G. et al.
@@ -501,12 +500,14 @@ MuonCatalyzedDTFusion::AtRestDoIt(G4Track const& track, G4Step const& step)
 {
     theTotalResult->Initialize(track);
 
-    CELER_LOG_LOCAL(info) << "DT mucf: "
-                          << track.GetParticleDefinition()->GetParticleName();
-    auto const post_step = step.GetPostStepPoint();
-    CELER_LOG_LOCAL(info) << "DT mucf: " << post_step->GetPosition().x() / cm
-                          << " cm and " << post_step->GetKineticEnergy()
-                          << " MeV";
+    // CELER_LOG_LOCAL(info) << "DT mucf: "
+    //                       <<
+    //                       track.GetParticleDefinition()->GetParticleName();
+    // auto const post_step = step.GetPostStepPoint();
+    // CELER_LOG_LOCAL(info) << "DT mucf: " << post_step->GetPosition().x() /
+    // cm
+    //                       << " cm and " << post_step->GetKineticEnergy()
+    //                       << " MeV";
 
     G4double finalGlobalTime = track.GetGlobalTime();
     G4double finalLocalTime = track.GetLocalTime();
