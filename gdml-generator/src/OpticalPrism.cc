@@ -59,15 +59,12 @@ void OpticalPrism::ConstructSDandField()
  */
 G4VPhysicalVolume* OpticalPrism::create_prism()
 {
-    // Materials
-    auto nist = G4NistManager::Instance();
-    auto world_mat = nist->FindOrBuildMaterial("G4_Galactic");
-
     // World
     double const world_len = 0.5 * CLHEP::m;
     G4Box* world_box = new G4Box("world_box", world_len, world_len, world_len);
-    auto const world_lv = new G4LogicalVolume(world_box, world_mat, "world_lv");
-    auto const world_pv = new G4PVPlacement(
+    auto world_lv = new G4LogicalVolume(
+        world_box, OpticalPrism::air_material(), "world_lv");
+    auto world_pv = new G4PVPlacement(
         nullptr, G4ThreeVector(), world_lv, "world_pv", nullptr, false, 0, false);
 
     // Equilateral optical prism
@@ -76,10 +73,10 @@ G4VPhysicalVolume* OpticalPrism::create_prism()
     double const prism_len = prism_base;
     auto prism_solid
         = new G4Trd("prism", prism_base, 0, prism_side, prism_side, prism_len);
-    auto const prism_lv
-        = new G4LogicalVolume(prism_solid, this->water_material(), "prism_lv");
+    auto prism_lv = new G4LogicalVolume(
+        prism_solid, OpticalPrism::water_material(), "prism_lv");
     new G4PVPlacement(
-        nullptr, G4ThreeVector(), prism_lv, "world_pv", world_lv, false, 0, false);
+        nullptr, G4ThreeVector(), prism_lv, "prism_pv", world_lv, false, 0, false);
 
     // Add skin surface to prism
     auto opt_surface = new G4OpticalSurface("prism_surface");
@@ -99,32 +96,58 @@ G4VPhysicalVolume* OpticalPrism::create_prism()
  */
 void OpticalPrism::set_sd()
 {
-    auto prism_sd = new SensitiveDetector("prism_sm");
+    auto prism_sd = new SensitiveDetector("prism_sd");
     G4SDManager::GetSDMpointer()->AddNewDetector(prism_sd);
     G4VUserDetectorConstruction::SetSensitiveDetector("prism_lv", prism_sd);
 }
 
 //---------------------------------------------------------------------------//
 /*!
- * Return refractive index for water.
+ * Return water material with optical properties.
  *
  * See Geant4's examples/extended/optical/OpNovice
  * ( \c OpNoviceDetectorConstruction::Construct )
  */
 G4Material* OpticalPrism::water_material()
 {
-    auto* hydrogen = new G4Element(
-        "hydrogen", "H", /* Z = */ 1, /* A = */ 1.01 * g / mole);
-    auto* oxygen = new G4Element(
-        "oxygen", "O", /* Z = */ 8, /* A = */ 16.00 * g / mole);
+    double const g_per_mole = CLHEP::g / CLHEP::mole;
+    double const g_per_cm3 = CLHEP::g / CLHEP::cm3;
+
+    auto hydrogen = new G4Element(
+        "hydrogen", "H", /* Z = */ 1, /* A = */ 1.01 * g_per_mole);
+    auto oxygen = new G4Element(
+        "oxygen", "O", /* Z = */ 8, /* A = */ 16.00 * g_per_mole);
 
     auto result = new G4Material(
-        "water", /* density = */ 1.0 * g / cm3, /* num_elements = */ 2);
+        "water", /* density = */ 1.0 * g_per_cm3, /* num_elements = */ 2);
     result->AddElement(hydrogen, 2);
     result->AddElement(oxygen, 1);
 
-    auto prop_table = new G4MaterialPropertiesTable();
     auto const rindex = OpticalPrism::water_rindex();
+    Table reflectivity;
+    reflectivity.energy = OpticalPrism::energy_table();
+    reflectivity.value = std::vector<double>(reflectivity.energy.size(), 0.7);
+
+    auto prop_table = new G4MaterialPropertiesTable();
+    prop_table->AddProperty("RINDEX", rindex.energy, rindex.value);
+    prop_table->AddProperty(
+        "REFLECTIVITY", reflectivity.energy, reflectivity.value);
+    result->SetMaterialPropertiesTable(prop_table);
+
+    return result;
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Return air material with optical properties.
+ */
+G4Material* OpticalPrism::air_material()
+{
+    auto nist = G4NistManager::Instance();
+    auto result = nist->FindOrBuildMaterial("G4_AIR");
+
+    auto prop_table = new G4MaterialPropertiesTable();
+    auto const rindex = OpticalPrism::air_rindex();
     prop_table->AddProperty("RINDEX", rindex.energy, rindex.value);
     result->SetMaterialPropertiesTable(prop_table);
 
@@ -141,7 +164,7 @@ G4Material* OpticalPrism::water_material()
 OpticalPrism::Table OpticalPrism::water_rindex()
 {
     Table result;
-    result.energy = OpticalPrism::water_energy_table();
+    result.energy = OpticalPrism::energy_table();
     result.value = {1.3435, 1.344,  1.3445, 1.345,  1.3455, 1.346, 1.3465,
                     1.347,  1.3475, 1.348,  1.3485, 1.3492, 1.35,  1.3505,
                     1.351,  1.3518, 1.3522, 1.3530, 1.3535, 1.354, 1.3545,
@@ -152,9 +175,21 @@ OpticalPrism::Table OpticalPrism::water_rindex()
 
 //---------------------------------------------------------------------------//
 /*!
- * Return energy bins used for water properties.
+ * Return refractive index for air.
  */
-std::vector<double> OpticalPrism::water_energy_table()
+OpticalPrism::Table OpticalPrism::air_rindex()
+{
+    Table result;
+    result.energy = OpticalPrism::energy_table();
+    result.value = std::vector<double>(result.energy.size(), 1.0);
+    return result;
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Return energy bins for material properties.
+ */
+std::vector<double> OpticalPrism::energy_table()
 {
     return {2.034 * eV, 2.068 * eV, 2.103 * eV, 2.139 * eV, 2.177 * eV,
             2.216 * eV, 2.256 * eV, 2.298 * eV, 2.341 * eV, 2.386 * eV,
