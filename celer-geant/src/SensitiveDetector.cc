@@ -53,8 +53,14 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
         // return false;
     }
 
-    auto const process_name
-        = step->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+    auto process = step->GetPostStepPoint()->GetProcessDefinedStep();
+    auto const process_name = process->GetProcessName();
+
+    CELER_LOG(info) << "Process " << process_name << ": "
+                    << track->GetParticleDefinition()->GetParticleName()
+                    << " (" << track->GetParticleDefinition()->GetPDGEncoding()
+                    << "), with ID " << track->GetTrackID() << " and parent "
+                    << track->GetParentID();
 
     for (auto const* sec : *step->GetSecondary())
     {
@@ -121,14 +127,21 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 
         if (process_name == "MuonCatalyzedDDFusion")
         {
+            CELER_LOG(info) << " GPIL left: "
+                            << process->GetNumberOfInteractionLengthLeft();
             data.num_dd_neutrons++;
         }
         if (process_name == "MuonCatalyzedDTFusion")
         {
+            CELER_LOG(info) << " GPIL factor: " << process->GetPILfactor();
+            CELER_LOG(info) << " GPIL left: "
+                            << process->GetNumberOfInteractionLengthLeft();
             data.num_dt_neutrons++;
         }
         if (process_name == "MuonCatalyzedTTFusion")
         {
+            CELER_LOG(info) << " GPIL left: "
+                            << process->GetNumberOfInteractionLengthLeft();
             data.num_tt_neutrons++;
         }
     }

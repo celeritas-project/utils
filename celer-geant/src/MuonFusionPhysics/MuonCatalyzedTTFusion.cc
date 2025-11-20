@@ -61,6 +61,8 @@ MuonCatalyzedTTFusion::MuonCatalyzedTTFusion(G4String const& name)
     ,  // Owned by InteractionRegistry
     theTotalResult(new G4ParticleChange())
 {
+    verboseLevel = 2;
+
     // Modify G4VProcess flags to emulate G4VRest instead of G4VDiscrete
     //  enableAtRestDoIt = true;
     //  enablePostStepDoIt = false;
@@ -164,6 +166,9 @@ G4double MuonCatalyzedTTFusion::GetMeanCycleTime(G4Track const& track)
 
     if (verboseLevel > 0)
     {
+        G4int spin = (G4int)round(track.GetDynamicParticle()->GetSpin());
+        G4cout << "MuonCatalyzedTTFusion GetMeanCycleTime: spin: " << spin
+               << G4endl;
         G4cout << "MuonCatalyzedTTFusion GetMeanCycleTime: Temperature: "
                << temperature << " Tritium Phi: " << tritiumPhi << G4endl;
         G4cout << "MuonCatalyzedTTFusion GetMeanCycleTime: Mean Cycle Time: "
