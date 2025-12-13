@@ -7,30 +7,72 @@
 //---------------------------------------------------------------------------//
 #include <cstdlib>
 #include <string>
-#include <vector>
+#include <CLI/CLI.hpp>
 #include <G4GDMLParser.hh>
 #include <G4PhysicalVolumeStore.hh>
 #include <G4VPhysicalVolume.hh>
 #include <G4Version.hh>
-
 #include <corecel/Assert.hh>
+#include <corecel/Version.hh>
 #include <corecel/cont/Range.hh>
 #include <corecel/io/Join.hh>
 #include <corecel/io/Logger.hh>
+#include <geocel/GeantGdmlLoader.hh>
 #include <geocel/GeantGeoUtils.hh>
 #include <geocel/ScopedGeantExceptionHandler.hh>
 #include <geocel/ScopedGeantLogger.hh>
-#include <geocel/GeantGdmlLoader.hh>
 
 using namespace celeritas;
-
-//---------------------------------------------------------------------------//
-void print_usage(char const* exec_name)
+namespace
 {
-    std::cerr << "usage: " << exec_name
-              << " {input}.gdml {physvol-name|''} {depth} {output}.gdml\n";
+//---------------------------------------------------------------------------//
+/*!
+ * Print the usage of the app if possible, returning success.
+ */
+bool print_usage(CLI::App const& cli, std::ostream& os)
+{
+    if (auto base_formatter
+        = std::dynamic_pointer_cast<CLI::Formatter>(cli.get_formatter()))
+    {
+        auto usage = base_formatter->make_usage(&cli, std::string{});
+        if (!usage.empty() && usage.back() == '\n')
+        {
+            usage.pop_back();
+        }
+        os << usage;
+        return true;
+    }
+    return false;
 }
 
+//---------------------------------------------------------------------------//
+//! Construct a failure message for celeritas apps
+std::string failure_message(CLI::App const* cli, const CLI::Error& e)
+{
+    std::ostringstream os;
+    os << cli->get_name() << ": ";
+    if (print_usage(*cli, os))
+    {
+        // Usage printed successfully; now write the error
+        os << e.what();
+    }
+    else
+    {
+        // No usage available> write default error message
+        os << CLI::FailureMessage::simple(cli, e);
+    }
+
+    return std::move(os).str();
+}
+struct Args
+{
+    std::string input_file;
+    std::string volume_name;
+    int depth{0};
+    std::string output_file;
+};
+
+//---------------------------------------------------------------------------//
 void delete_daughters_after(G4LogicalVolume* lv, int depth)
 {
     if (depth == 0)
@@ -68,32 +110,29 @@ G4VPhysicalVolume* find_volume(std::string const& vol_name)
 }
 
 //---------------------------------------------------------------------------//
-void run(std::string const& inp_filename,
-         std::string const& vol_name,
-         int depth,
-         std::string const& out_filename)
+void run(Args const& args)
 {
     // Read geometry *without* stripping pointers
-    G4VPhysicalVolume* world = [&inp_filename] {
+    G4VPhysicalVolume* world = [&args] {
         using namespace celeritas;
         GeantGdmlLoader::Options opts;
         opts.pointers = GeantGdmlLoader::PointerTreatment::ignore;
         opts.detectors = false;
-        return GeantGdmlLoader(opts)(inp_filename).world;
+        return GeantGdmlLoader(opts)(args.input_file).world;
     }();
 
     // Find volume
-    if (vol_name.empty())
+    if (args.volume_name.empty())
     {
         CELER_LOG(info) << "Using original world volume";
     }
     else
     {
-        world = find_volume(vol_name);
+        world = find_volume(args.volume_name);
     }
 
     // Trim insides
-    delete_daughters_after(world->GetLogicalVolume(), depth);
+    delete_daughters_after(world->GetLogicalVolume(), args.depth);
 
     // Write output
     G4GDMLParser parser;
@@ -104,38 +143,60 @@ void run(std::string const& inp_filename,
     parser.SetOutputFileOverwrite(true);
 #endif
 
-    parser.Write(out_filename, world, /* append_pointers = */ false);
+    parser.Write(args.output_file, world, /* append_pointers = */ false);
 }
+
+}  // namespace
 
 int main(int argc, char* argv[])
 {
-    std::vector<std::string> args(argv + 1, argv + argc);
-    if (args.size() == 1 && (args.front() == "--help" || args.front() == "-h"))
+    Args args;
+
+    static CLI::App app;
+    app.failure_message(failure_message);
+    app.set_version_flag("--version,-v", celeritas::version_string);
+    app.description("Extract a subset of a GDML geometry file");
+    app.add_option("--world",
+                   args.volume_name,
+                   "Physical volume name (empty string for world)");
+    app.add_option("--depth", args.depth, "Depth to preserve (0 for all)")
+        ->check(CLI::NonNegativeNumber);
+    app.add_option("input", args.input_file, "Input GDML file")
+        ->required()
+        ->check(CLI::ExistingFile);
+    app.add_option("output", args.output_file, "Output GDML file")->required();
+
+    try
     {
-        print_usage(argv[0]);
-        return EXIT_SUCCESS;
+        app.parse(argc, argv);
     }
-    if (args.size() != 4)
+    catch (CLI::ParseError const& e)
     {
-        // Incorrect number of arguments: print help and exit
-        print_usage(argv[0]);
-        return 2;
+        if (e.get_exit_code() != EXIT_SUCCESS)
+        {
+            world_logger()({app.get_name(), 0}, LogLevel::critical)
+                << e.get_name() << ": " << e.what();
+            print_usage(app, std::clog);
+        }
+        return app.exit(e);
     }
 
     try
     {
         ScopedGeantLogger scoped_log_;
         ScopedGeantExceptionHandler scoped_exceptions_;
-        run(args[0], args[1], std::atoi(args[2].c_str()), args[3]);
+        run(args);
     }
-    catch (RuntimeError const& e)
+    catch (std::exception const& e)
     {
-        CELER_LOG(critical) << "Runtime error: " << e.what();
-        return EXIT_FAILURE;
-    }
-    catch (DebugError const& e)
-    {
-        CELER_LOG(critical) << "Assertion failure: " << e.what();
+        auto msg = world_logger()({app.get_name(), 0}, LogLevel::critical);
+
+        if (!dynamic_cast<RuntimeError const*>(&e))
+        {
+            // Not a Celeritas runtime error: print exception type
+            msg << "Error: ";
+        }
+        msg << e.what();
         return EXIT_FAILURE;
     }
 
