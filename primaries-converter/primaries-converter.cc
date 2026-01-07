@@ -37,7 +37,7 @@ void convert(T reader, RootEventWriter& writer, size_t max_events)
  */
 int main(int argc, char* argv[])
 {
-    if (argc == 1)
+    if (argc == 1 || argc > 6)
     {
         std::cout << "Usage: " << argv[0]
                   << " input.[hepmc3/jsonl] [-n max_events] [-o output.root]"
