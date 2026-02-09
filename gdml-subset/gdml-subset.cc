@@ -6,9 +6,13 @@
 //! \file gdml-subset.cc
 //---------------------------------------------------------------------------//
 #include <cstdlib>
+#include <filesystem>
+#include <sstream>
 #include <string>
+#include <unordered_set>
 #include <CLI/CLI.hpp>
 #include <G4GDMLParser.hh>
+#include <G4LogicalVolumeStore.hh>
 #include <G4PhysicalVolumeStore.hh>
 #include <G4VPhysicalVolume.hh>
 #include <G4Version.hh>
@@ -70,6 +74,7 @@ struct Args
     std::string volume_name;
     int depth{0};
     std::string output_file;
+    bool strip_pointers{false};
 };
 
 //---------------------------------------------------------------------------//
@@ -110,25 +115,45 @@ G4VPhysicalVolume* find_volume(std::string const& vol_name)
 }
 
 //---------------------------------------------------------------------------//
+std::string generate_output_filename(std::string const& input_file,
+                                     std::string const& volume_name)
+{
+    namespace fs = std::filesystem;
+
+    fs::path input_path(input_file);
+    std::string basename = input_path.stem().string();
+
+    std::string output_name = basename;
+    if (!volume_name.empty())
+    {
+        output_name += "-" + volume_name;
+    }
+    output_name += ".gdml";
+
+    return output_name;
+}
+
 void run(Args const& args)
 {
     // Read geometry *without* stripping pointers
     G4VPhysicalVolume* world = [&args] {
         using namespace celeritas;
         GeantGdmlLoader::Options opts;
-        opts.pointers = GeantGdmlLoader::PointerTreatment::ignore;
+        opts.pointers = args.strip_pointers
+                            ? GeantGdmlLoader::PointerTreatment::remove
+                            : GeantGdmlLoader::PointerTreatment::ignore;
         opts.detectors = false;
         return GeantGdmlLoader(opts)(args.input_file).world;
     }();
 
     // Find volume
-    if (args.volume_name.empty())
+    if (!args.volume_name.empty())
     {
-        CELER_LOG(info) << "Using original world volume";
+        world = find_volume(args.volume_name);
     }
     else
     {
-        world = find_volume(args.volume_name);
+        CELER_LOG(info) << "Using original world volume";
     }
 
     // Trim insides
@@ -156,15 +181,18 @@ int main(int argc, char* argv[])
     app.failure_message(failure_message);
     app.set_version_flag("--version,-v", celeritas::version_string);
     app.description("Extract a subset of a GDML geometry file");
-    app.add_option("--world",
+    app.add_option("--volume",
                    args.volume_name,
                    "Physical volume name (empty string for world)");
     app.add_option("--depth", args.depth, "Depth to preserve (0 for all)")
         ->check(CLI::NonNegativeNumber);
+    app.add_flag("--strip-pointers",
+                 args.strip_pointers,
+                 "Strip pointer suffixes from GDML input");
     app.add_option("input", args.input_file, "Input GDML file")
         ->required()
         ->check(CLI::ExistingFile);
-    app.add_option("output", args.output_file, "Output GDML file")->required();
+    app.add_option("-o,--output", args.output_file, "Output GDML file");
 
     try
     {
@@ -179,6 +207,16 @@ int main(int argc, char* argv[])
             print_usage(app, std::clog);
         }
         return app.exit(e);
+    }
+
+    // Generate default output filename if not specified
+    if (args.output_file.empty())
+    {
+        std::string vol_name{args.volume_name};
+        // Replace slashes with dashes for filename
+        std::replace(vol_name.begin(), vol_name.end(), '/', '-');
+        args.output_file = generate_output_filename(args.input_file, vol_name);
+        CELER_LOG(info) << "Writing to '" << args.output_file << "'";
     }
 
     try
