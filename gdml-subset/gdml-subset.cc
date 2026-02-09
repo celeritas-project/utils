@@ -62,7 +62,7 @@ std::string failure_message(CLI::App const* cli, const CLI::Error& e)
     }
     else
     {
-        // No usage available> write default error message
+        // No usage available: write default error message
         os << CLI::FailureMessage::simple(cli, e);
     }
 
@@ -156,8 +156,9 @@ void run(Args const& args)
         CELER_LOG(info) << "Using original world volume";
     }
 
-    // Trim insides
-    delete_daughters_after(world->GetLogicalVolume(), args.depth);
+    // Trim insides when depth zero is reached (i.e., input 1 has only the
+    // given volume, input 0 has all volumes)
+    delete_daughters_after(world->GetLogicalVolume(), args.depth - 1);
 
     // Write output
     G4GDMLParser parser;
@@ -204,7 +205,6 @@ int main(int argc, char* argv[])
         {
             world_logger()({app.get_name(), 0}, LogLevel::critical)
                 << e.get_name() << ": " << e.what();
-            print_usage(app, std::clog);
         }
         return app.exit(e);
     }
