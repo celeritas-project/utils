@@ -32,7 +32,7 @@ void EventAction::BeginOfEventAction(G4Event const* event)
 {
     if (auto const id = event->GetEventID(); id % log_progress_ == 0)
     {
-        CELER_LOG_LOCAL(status) << "Begin event " << id;
+        CELER_LOG(status) << "Begin event " << id;
     }
 
     // Reset energy deposition for this event

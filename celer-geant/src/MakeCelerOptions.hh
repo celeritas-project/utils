@@ -81,6 +81,7 @@ celeritas::SetupOptions MakeCelerOptions()
                "Using default list.";
     }
 
+    opts.ignore_processes = {"CoulombScat"};
     opts.sd.ignore_zero_deposition = false;
 
     // Set along-step factory with zero field

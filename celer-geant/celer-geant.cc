@@ -14,6 +14,7 @@
 #include <accel/TrackingManagerConstructor.hh>
 #include <accel/TrackingManagerIntegration.hh>
 #include <celeritas/ext/EmPhysicsList.hh>
+#include <celeritas/ext/FtfpBertPhysicsList.hh>
 #include <corecel/io/Logger.hh>
 
 #include "ActionInitialization.hh"
@@ -22,12 +23,38 @@
 #include "MakeCelerOptions.hh"
 #include "MuonFusionPhysics/MuonFusionPhysics.hh"
 #include "RootIO.hh"
+#include "Stopwatch.hh"
 
+//---------------------------------------------------------------------------//
+//! Physics list selection.
+//---------------------------------------------------------------------------//
+// Acceleron
 std::unique_ptr<QGSP_BIC> mucf_physics()
 {
     auto physics = std::make_unique<QGSP_BIC>(0);
     physics->RegisterPhysics(new MuonFusionPhysics());
     return physics;
+}
+
+// Muon physics only
+std::unique_ptr<celeritas::EmPhysicsList> celeritas_em_mu_physics()
+{
+    using PhysicsOptions = celeritas::GeantPhysicsOptions;
+    using MuonPhysicsOptions = celeritas::GeantMuonPhysicsOptions;
+    auto phys_opts = PhysicsOptions::deactivated();
+    phys_opts.muon = MuonPhysicsOptions{};
+    phys_opts.muon.msc = celeritas::MscModelSelection::none;
+    return std::make_unique<celeritas::EmPhysicsList>(phys_opts);
+}
+
+// FTFP_BERT with muon physics
+std::unique_ptr<celeritas::FtfpBertPhysicsList> celeritas_ftfp_mu_physics()
+{
+    using PhysicsOptions = celeritas::GeantPhysicsOptions;
+    using MuonPhysicsOptions = celeritas::GeantMuonPhysicsOptions;
+    PhysicsOptions phys_opts;
+    phys_opts.muon = MuonPhysicsOptions();
+    return std::make_unique<celeritas::FtfpBertPhysicsList>(phys_opts);
 }
 
 //---------------------------------------------------------------------------//
@@ -58,19 +85,12 @@ int main(int argc, char* argv[])
         G4RunManagerFactory::CreateRunManager(G4RunManagerType::MT));
     run_manager->SetNumberOfThreads(num_threads);
 
-    // Initialize Celeritas
+    // Initialize Celeritas integration with its setup options
     auto& tmi = celeritas::TrackingManagerIntegration::Instance();
     tmi.SetOptions(MakeCelerOptions());
 
     // Initialize physics with Celeritas offload
-    using PhysicsOptions = celeritas::GeantPhysicsOptions;
-    using MuonPhysicsOptions = celeritas::GeantMuonPhysicsOptions;
-
-    // phys_opts.muon = MuonPhysicsOptions{};
-    // phys_opts.muon.msc = celeritas::MscModelSelection::none;
-    // auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
-
-    auto physics = mucf_physics();
+    auto physics = celeritas_em_mu_physics();
     physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
     run_manager->SetUserInitialization(physics.release());
 
@@ -86,8 +106,21 @@ int main(int argc, char* argv[])
     JsonReader::Validate(json_pg, "num_events");
     auto const num_events = json_pg.at("num_events").get<size_t>();
     CELER_VALIDATE(num_events, << "Number of events must be positive");
+
+    Stopwatch timer_init;
+    timer_init.start();
     run_manager->Initialize();
+    timer_init.stop();
+    CELER_LOG(info) << "Initialization CPU / wall times: " << timer_init.cpu()
+                    << " / " << timer_init.wall() << " s";
+
+    Stopwatch timer_run;
+    timer_run.start();
     run_manager->BeamOn(num_events);
+    timer_run.stop();
+
+    CELER_LOG(info) << "Simulation run CPU / wall times: " << timer_run.cpu()
+                    << " / " << timer_run.wall() << " s";
 
     return EXIT_SUCCESS;
 }

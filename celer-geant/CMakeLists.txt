@@ -47,6 +47,7 @@ set(SOURCES
   src/RunAction.cc
   src/SensitiveDetector.cc
   src/StackingAction.cc
+  src/Stopwatch.cc
 )
 
 set(MUCF_PHYSICS
