@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #include "OpticalPrism.hh"
 
+#include <cmath>
 #include <G4Box.hh>
 #include <G4LogicalSkinSurface.hh>
 #include <G4LogicalVolume.hh>
@@ -27,10 +28,7 @@ OpticalPrism::OpticalPrism() {}
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct slab geometry.
- *
- * For MSC experimental comparison, see
- * https://journals.aps.org/pr/abstract/10.1103/PhysRev.84.634
+ * Construct optical prism geometry.
  */
 G4VPhysicalVolume* OpticalPrism::Construct()
 {
@@ -52,10 +50,7 @@ void OpticalPrism::ConstructSDandField()
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct slab based on input definition.
- *
- * The world volume material is vacuum and is is 4 times larger in the z-axis
- * than the input slab, while keeping the same size in x and y axes.
+ * Construct a triangular optical prism in a world volume.
  */
 G4VPhysicalVolume* OpticalPrism::create_prism()
 {
@@ -70,7 +65,7 @@ G4VPhysicalVolume* OpticalPrism::create_prism()
     // Equilateral optical prism
     double const prism_base = 10 * CLHEP::cm;
     double const prism_side = prism_base;
-    double const prism_len = prism_base;
+    double const prism_len = (std::sqrt(3) / 2) * prism_base;
     auto prism_solid
         = new G4Trd("prism", prism_base, 0, prism_side, prism_side, prism_len);
     auto prism_lv = new G4LogicalVolume(
