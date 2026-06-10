@@ -36,6 +36,7 @@ add_executable(gdml-gen gdml-gen.cc
   src/ThinSlab.cc
   src/SimpleLZ.cc
   src/NotionalJUNO.cc
+  src/NotionalDUNE.cc
 )
 
 target_compile_features(gdml-gen
