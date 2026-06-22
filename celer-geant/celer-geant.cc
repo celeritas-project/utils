@@ -58,9 +58,7 @@ int main(int argc, char* argv[])
     // Initialize physics with Celeritas offload
     using PhysicsOptions = celeritas::GeantPhysicsOptions;
     using MuonPhysicsOptions = celeritas::GeantMuonPhysicsOptions;
-    auto phys_opts = PhysicsOptions::deactivated();
-    phys_opts.muon = MuonPhysicsOptions{};
-    phys_opts.muon.msc = celeritas::MscModelSelection::none;
+    auto phys_opts = PhysicsOptions{};
 
     auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
     physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));

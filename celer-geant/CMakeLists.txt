@@ -17,7 +17,7 @@ endif()
 
 #-----------------------------------------------------------------------------#
 # Find packages
-find_package(Celeritas 0.6 REQUIRED)
+find_package(Celeritas 0.7 REQUIRED)
 find_package(Geant4 REQUIRED gdml multithreaded) # TODO: check minimum version
 find_package(ROOT REQUIRED)
 find_package(HepMC3 REQUIRED)
