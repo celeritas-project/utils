@@ -27,6 +27,7 @@
 #include "FourSteelSlabs.hh"
 #include "MucfBox.hh"
 #include "MucfTestGeo.hh"
+#include "NotionalDUNE.hh"
 #include "NotionalJUNO.hh"
 #include "OpticalBoxes.hh"
 #include "OpticalPrism.hh"
@@ -61,6 +62,7 @@ enum class GeometryID
     mucf_box,  //!< Muon-catalyzed fusion box target only
     optical_prism,  //!< Triangular prism with optical properties
     notional_juno,  //!< Notional model of the JUNO experiement
+    notional_dune,  //!< Notional model of the DUNE experiement
     size_
 };
 
@@ -76,55 +78,41 @@ constexpr char const* label(GeometryID id) noexcept
     {
         case GID::box:
             return "Lead box";
-            break;
         case GID::four_steel_slabs:
             return "Four steel slabs";
-            break;
         case GID::simple_cms:
             return "Simple CMS - simple materials";
-            break;
         case GID::simple_cms_composite:
             return "Simple CMS - composite materials";
-            break;
         case GID::segmented_simple_cms:
             return "Segmented Simple CMS - simple materials";
-            break;
         case GID::segmented_simple_cms_composite:
             return "Segmented Simple CMS - composite materials";
-            break;
         case GID::testem3:
             return "TestEm3 - simple materials";
-            break;
         case GID::testem3_composite:
             return "TestEm3 - composite materials";
-            break;
         case GID::testem3_flat:
             return "TestEm3 flat - simple materials, for ORANGE";
-            break;
         case GID::testem3_composite_flat:
             return "TestEm3 flat - composite materials, for ORANGE";
-            break;
         case GID::optical_boxes:
             return "Optical boxes - composite material boxes with optical "
                    "properties";
-            break;
         case GID::thin_slab:
             return "Thin Pb slab";
-            break;
         case GID::simple_lz:
             return "Simplified LZ - top PMT array";
-            break;
         case GID::mucf_test_geo:
             return "MuCF test geometry - dt target and neutron counters";
-            break;
         case GID::mucf_box:
             return "MuCF box target only";
-            break;
         case GID::optical_prism:
             return "Optical triangular prism";
         case GID::notional_juno:
             return "Notional model of JUNO";
-            break;
+        case GID::notional_dune:
+            return "Notional model of DUNE";
         default:
             __builtin_unreachable();
     }
@@ -162,6 +150,10 @@ void print_help(char const* argv)
          << endl;
     cout << "3 extra parameters are needed [device_radius], "
             "[pmt_radius], [num_pmts]"
+         << endl;
+    cout << "For " << static_cast<int>(GeometryID::notional_dune) << ":"
+         << endl;
+    cout << "2 extra parameters are needed [num_spheres] and [num_levels] "
          << endl;
 }
 
@@ -216,26 +208,12 @@ void export_gdml(std::string const& gdml_filename)
  */
 int main(int argc, char* argv[])
 {
-    if (argc != 2 && argc != 3 && argc != 5)
-    {
-        print_help(argv[0]);
-        return EXIT_FAILURE;
-    }
-
     // Load input parameters
     auto const geometry_id = static_cast<GeometryID>(std::stoi(argv[1]));
     if (geometry_id >= GeometryID::size_)
     {
         std::cout << static_cast<int>(geometry_id)
                   << " is an invalid geometry id." << std::endl;
-        return EXIT_FAILURE;
-    }
-    if (geometry_id != GeometryID::segmented_simple_cms
-        && geometry_id != GeometryID::segmented_simple_cms_composite
-        && geometry_id != GeometryID::simple_lz && argc != 2
-        && geometry_id != GeometryID::notional_juno && argc != 5)
-    {
-        std::cout << "Wrong number of arguments" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -279,12 +257,26 @@ int main(int argc, char* argv[])
             break;
 
         case GeometryID::segmented_simple_cms:
+            if (argc != 5)
+            {
+                std::cout
+                    << "Segmented Simple CMS requires 3 additional arguments "
+                    << std::endl;
+                return EXIT_FAILURE;
+            }
             run_manager->SetUserInitialization(new SegmentedSimpleCms(
                 SCMSType::simple, get_segments(argc, argv)));
             gdml_filename = "segmented-simple-cms.gdml";
             break;
 
         case GeometryID::segmented_simple_cms_composite:
+            if (argc != 5)
+            {
+                std::cout
+                    << "Segmented Simple CMS requires 3 additional arguments "
+                    << std::endl;
+                return EXIT_FAILURE;
+            }
             run_manager->SetUserInitialization(new SegmentedSimpleCms(
                 SCMSType::composite, get_segments(argc, argv)));
             gdml_filename = "composite-segmented-simple-cms.gdml";
@@ -379,6 +371,36 @@ int main(int argc, char* argv[])
             else
             {
                 std::cout << "NotionalJUNO requires 3 additional arguments "
+                          << std::endl;
+                return EXIT_FAILURE;
+            }
+        case GeometryID::notional_dune:
+            gdml_filename = "notional_dune.gdml";
+            if (argc == 4)
+            {
+                int num_spheres = std::stoi(argv[2]);
+                int num_levels = std::stoi(argv[3]);
+
+                if (num_spheres <= 0)
+                {
+                    std::cout << "num_spheres must be positive " << std::endl;
+                    return EXIT_FAILURE;
+                }
+                if (num_levels < 0)
+                {
+                    std::cout
+                        << "The number of levels must be non-negative "
+                        << std::endl;
+                    return EXIT_FAILURE;
+                }
+
+                run_manager->SetUserInitialization(
+                    new NotionalDUNE(num_spheres, num_levels));
+                break;
+            }
+            else
+            {
+                std::cout << "NotionalDUNE requires 2 additional arguments "
                           << std::endl;
                 return EXIT_FAILURE;
             }
