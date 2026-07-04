@@ -43,6 +43,7 @@ The available geometries are:
 | 14   | Muon-catalyzed fusion dt target only |
 | 15   | Optical prism |
 | 16   | Notional JUNO model |
+| 17   | Notional DUNE model |
 
 [testem3]: https://github.com/apt-sim/AdePT/tree/master/examples/TestEm3
 
