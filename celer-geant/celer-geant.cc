@@ -5,6 +5,7 @@
 //! \file celer-geant/celer-geant.cc
 //! \brief Celeritas-Geant4 offloading application
 //---------------------------------------------------------------------------//
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <G4Electron.hh>
@@ -37,6 +38,9 @@ int main(int argc, char* argv[])
         std::cout << "Usage: " << argv[0] << " input.json" << std::endl;
         return EXIT_FAILURE;
     }
+
+    // Set MT logger level
+    ::setenv("CELER_LOG_LOCAL", "status", /* overwrite = */ 1);
 
     // Load and verify input file
     JsonReader::Construct(argv[1]);

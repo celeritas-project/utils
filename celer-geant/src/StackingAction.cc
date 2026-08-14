@@ -12,18 +12,16 @@
 #include <corecel/Assert.hh>
 
 #include "JsonReader.hh"
+#include "MakeCelerOptions.hh"
+
 //---------------------------------------------------------------------------//
 /*!
- * Construct with list of valid PDGs from JSON.
+ * Construct with list of valid PDGs from the JSON input.
  */
-StackingAction::StackingAction() : G4UserStackingAction()
+StackingAction::StackingAction()
+    : G4UserStackingAction()
+    , offloaded_pdgs_(detail::offloaded_pdgs_from_json())
 {
-    JsonReader::Validate(JsonReader::Instance(), "celeritas");
-    auto const& json = JsonReader::Instance().at("celeritas");
-    if (json.contains("offload_particles"))
-    {
-        valid_pdgs_ = json.at("offload_particles").get<std::vector<PDG>>();
-    }
 }
 
 //---------------------------------------------------------------------------//
@@ -33,14 +31,11 @@ StackingAction::StackingAction() : G4UserStackingAction()
 G4ClassificationOfNewTrack
 StackingAction::ClassifyNewTrack(G4Track* const track)
 {
-    auto is_valid = [this](PDG pdg) -> bool {
-        return std::any_of(this->valid_pdgs_.begin(),
-                           this->valid_pdgs_.end(),
-                           [&pdg](PDG this_pdg) { return this_pdg == pdg; });
-    };
+    using detail::is_valid_celeritas_pdg;
 
     auto* pd = track->GetParticleDefinition();
     CELER_ASSERT(pd);
-
-    return is_valid(pd->GetPDGEncoding()) ? fUrgent : fKill;
+    return is_valid_celeritas_pdg(offloaded_pdgs_, pd->GetPDGEncoding())
+               ? fUrgent
+               : fKill;
 }

@@ -22,13 +22,7 @@ SensitiveDetector::SensitiveDetector(std::string sd_name)
 {
     CELER_VALIDATE(!sd_name.empty(),
                    << "must provide a valid sensitive detector name");
-
-    JsonReader::Validate(JsonReader::Instance(), "celeritas");
-    auto const& json = JsonReader::Instance().at("celeritas");
-    if (json.contains("offload_particles"))
-    {
-        valid_pdgs_ = json.at("offload_particles").get<std::vector<PDG>>();
-    }
+    offloaded_pdgs_ = detail::offloaded_pdgs_from_json();
 }
 
 //---------------------------------------------------------------------------//
@@ -38,6 +32,7 @@ SensitiveDetector::SensitiveDetector(std::string sd_name)
 G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 {
     using celeritas::Array;
+    using detail::is_valid_celeritas_pdg;
 
     CELER_EXPECT(step);
     auto* track = step->GetTrack();
@@ -45,9 +40,9 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     auto* pd = track->GetParticleDefinition();
     CELER_ASSERT(pd);
 
-    if (!this->is_pdg_valid(pd->GetPDGEncoding()))
+    if (!is_valid_celeritas_pdg(offloaded_pdgs_, pd->GetPDGEncoding()))
     {
-        // Do not score particles that aren't in the offload list
+        // Do not score particles that are not in the offload list
         return false;
     }
 
@@ -71,9 +66,9 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
         h.SetBinContent(i, h.GetBinContent(i) + WEIGHT); \
     }
 
-    auto const& pre_pos = pre->GetPosition() / cm;
-    auto const len = step->GetStepLength() / cm;
-    auto const edep = step->GetTotalEnergyDeposit();
+    auto const& pre_pos = pre->GetPosition() / CLHEP::cm;
+    auto const len = step->GetStepLength() / CLHEP::cm;
+    auto const edep = step->GetTotalEnergyDeposit();  //[MeV]
 
     // Add total energy deposit for this event for this SD
     data.total_edep += edep;
@@ -83,26 +78,30 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     SD_1D_FILL_WEIGHT(energy_dep_z, pre_pos.z(), edep)
     SD_1D_FILL(step_len, len)
     SD_2D_FILL(pos_xy, pre_pos.x(), pre_pos.y())
-    SD_1D_FILL(time, pre->GetGlobalTime())
+    SD_1D_FILL(time, pre->GetGlobalTime())  // [ns]
 
-    auto is_equal = [](G4ThreeVector const& a, G4ThreeVector const& b) -> bool {
-        return a.x() == b.x() && a.y() == b.y() && a.z() == b.z();
-    };
-    auto to_array
-        = [](CLHEP::Hep3Vector const& inp) -> celeritas::Array<double, 3> {
-        return celeritas::Array<double, 3>{inp.x(), inp.y(), inp.z()};
-    };
-
-    if (!is_equal(track->GetVertexPosition(), pre->GetPosition()))
+    // Fill the cos(theta) histogram when for step number > 0
     {
-        // This is a hack to have a valid post-step point.
-        // Ideally we would do track->GetCurrentStepNumber() > 0, but this
-        // information is not available in Celeritas
-        auto* post = step->GetPostStepPoint();
-        CELER_ASSERT(post);
-        auto const pre_dir = to_array(pre->GetMomentumDirection());
-        auto const post_dir = to_array(post->GetMomentumDirection());
-        SD_1D_FILL(costheta, celeritas::dot_product(pre_dir, post_dir))
+        auto is_equal
+            = [](G4ThreeVector const& a, G4ThreeVector const& b) -> bool {
+            return a.x() == b.x() && a.y() == b.y() && a.z() == b.z();
+        };
+        auto to_array
+            = [](CLHEP::Hep3Vector const& inp) -> celeritas::Array<double, 3> {
+            return celeritas::Array<double, 3>{inp.x(), inp.y(), inp.z()};
+        };
+
+        if (!is_equal(track->GetVertexPosition(), pre->GetPosition()))
+        {
+            // This is a hack to have a valid post-step point.
+            // Ideally we would do track->GetCurrentStepNumber() > 0, but this
+            // information is not available in Celeritas
+            auto* post = step->GetPostStepPoint();
+            CELER_ASSERT(post);
+            auto const pre_dir = to_array(pre->GetMomentumDirection());
+            auto const post_dir = to_array(post->GetMomentumDirection());
+            SD_1D_FILL(costheta, celeritas::dot_product(pre_dir, post_dir))
+        }
     }
 
     return true;
@@ -111,16 +110,3 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 #undef SD_2D_FILL
 #undef SD_1D_FILL_WEIGHT
 }
-
-//---------------------------------------------------------------------------//
-/*!
- * Only process PDGs that are listed the \c SetupOptions::offload_particles .
- *
- * If the list is empty, it defaults to the Celeritas basic EM list.
- */
-bool SensitiveDetector::is_pdg_valid(PDG id) const
-{
-    return std::any_of(this->valid_pdgs_.begin(),
-                       this->valid_pdgs_.end(),
-                       [&id](PDG this_pdg) { return id == this_pdg; });
-};

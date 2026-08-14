@@ -6,6 +6,8 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include <unordered_map>
+#include <vector>
 #include <G4Electron.hh>
 #include <G4Gamma.hh>
 #include <G4MuonMinus.hh>
@@ -17,14 +19,53 @@
 #include <accel/TrackingManagerConstructor.hh>
 #include <celeritas/phys/PDGNumber.hh>
 #include <corecel/Assert.hh>
+#include <corecel/io/Logger.hh>
 
 #include "JsonReader.hh"
+
+namespace detail
+{
+//---------------------------------------------------------------------------/
+/*!
+ * Static list of valid PDGs for Celeritas offload.
+ */
+using PDG = int;
+using VecPDG = std::vector<PDG>;
+
+static VecPDG const supported_celeritas_pdgs{
+    celeritas::pdg::gamma().get(),
+    celeritas::pdg::electron().get(),
+    celeritas::pdg::positron().get(),
+    celeritas::pdg::mu_minus().get(),
+    celeritas::pdg::mu_plus().get(),
+};
+
+//! Helper function to verify if PDG is in the list of particles
+static bool is_valid_celeritas_pdg(VecPDG const& valid_pdgs, PDG pdg)
+{
+    return std::any_of(supported_celeritas_pdgs.begin(),
+                       supported_celeritas_pdgs.end(),
+                       [pdg](PDG this_pdg) { return this_pdg == pdg; });
+}
+
+//! Return list of PDGs used given the JSON input
+static VecPDG offloaded_pdgs_from_json()
+{
+    JsonReader::Validate(JsonReader::Instance(), "celeritas");
+    auto const& json = JsonReader::Instance().at("celeritas");
+    VecPDG result = json.contains("offload_particles")
+                        ? json.at("offload_particles").get<VecPDG>()
+                        : supported_celeritas_pdgs;
+    return result;
+}
+//---------------------------------------------------------------------------/
+}  // namespace detail
 
 //---------------------------------------------------------------------------/
 /*!
  * Load vector of \c G4ParticleDefinition from list of PDGs.
  */
-celeritas::SetupOptions::VecG4PD from_pdgs(std::vector<int> input)
+inline celeritas::SetupOptions::VecG4PD initialize_pdgs_from_json()
 {
     using celeritas::PDGNumber;
     static std::unordered_map<PDGNumber, G4ParticleDefinition*> supported = {
@@ -35,11 +76,8 @@ celeritas::SetupOptions::VecG4PD from_pdgs(std::vector<int> input)
         {celeritas::pdg::mu_plus(), G4MuonPlus::Definition()},
     };
 
-    CELER_VALIDATE(!input.empty(),
-                   << "Celeritas \"offload_particles\" option is present but "
-                      "empty. Specify PDGs or remove it to use the Celeritas "
-                      "default list.");
     celeritas::SetupOptions::VecG4PD result;
+    auto const input = detail::offloaded_pdgs_from_json();
     for (auto pdg : input)
     {
         auto it = supported.find(PDGNumber{pdg});
@@ -54,7 +92,7 @@ celeritas::SetupOptions::VecG4PD from_pdgs(std::vector<int> input)
 /*!
  * Celeritas runtime options.
  */
-celeritas::SetupOptions MakeCelerOptions()
+inline celeritas::SetupOptions MakeCelerOptions()
 {
     using PDG = int;
     using VecPDG = std::vector<PDG>;
@@ -71,8 +109,7 @@ celeritas::SetupOptions MakeCelerOptions()
 
     if (json.contains("offload_particles"))
     {
-        opts.offload_particles
-            = from_pdgs(json.at("offload_particles").get<VecPDG>());
+        opts.offload_particles = initialize_pdgs_from_json();
     }
     else
     {

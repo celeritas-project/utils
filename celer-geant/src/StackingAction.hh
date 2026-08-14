@@ -9,11 +9,11 @@
 #include <vector>
 #include <G4UserStackingAction.hh>
 
+#include "MakeCelerOptions.hh"
+
 //---------------------------------------------------------------------------//
 /*!
  * Classify any particle that should not be offloaded as \c fKill .
- *
- * \todo: Improve initial default list.
  */
 class StackingAction : public G4UserStackingAction
 {
@@ -25,6 +25,5 @@ class StackingAction : public G4UserStackingAction
     G4ClassificationOfNewTrack ClassifyNewTrack(G4Track* const track);
 
   private:
-    using PDG = int;
-    std::vector<PDG> valid_pdgs_{11, -11, 22};
+    detail::VecPDG offloaded_pdgs_;
 };

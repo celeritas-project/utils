@@ -9,6 +9,8 @@
 #include <string>
 #include <G4VSensitiveDetector.hh>
 
+#include "MakeCelerOptions.hh"
+
 //---------------------------------------------------------------------------//
 /*!
  * Sensitive detector class.
@@ -25,9 +27,5 @@ class SensitiveDetector : public G4VSensitiveDetector
     G4bool ProcessHits(G4Step* step, G4TouchableHistory*) final;
 
   private:
-    using PDG = int;
-    std::vector<PDG> valid_pdgs_{11, -11, 22};
-
-    // Verify if PDG is in the list of offloaded particles
-    bool is_pdg_valid(PDG id) const;
+    detail::VecPDG offloaded_pdgs_;
 };
