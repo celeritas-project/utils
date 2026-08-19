@@ -68,7 +68,7 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     auto const& pre_pos = pre->GetPosition() / CLHEP::cm;
     auto const len = step->GetStepLength() / CLHEP::cm;
-    auto const edep = step->GetTotalEnergyDeposit();  //[MeV]
+    auto const edep = step->GetTotalEnergyDeposit() / CLHEP::MeV;
 
     // Add total energy deposit for this event for this SD
     data.total_edep += edep;
@@ -78,7 +78,7 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
     SD_1D_FILL_WEIGHT(energy_dep_z, pre_pos.z(), edep)
     SD_1D_FILL(step_len, len)
     SD_2D_FILL(pos_xy, pre_pos.x(), pre_pos.y())
-    SD_1D_FILL(time, pre->GetGlobalTime())  // [ns]
+    SD_1D_FILL(time, pre->GetGlobalTime() / CLHEP::s)
 
     // Fill the cos(theta) histogram when for step number > 0
     {

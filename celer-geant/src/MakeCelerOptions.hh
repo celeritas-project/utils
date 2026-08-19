@@ -13,6 +13,7 @@
 #include <G4MuonMinus.hh>
 #include <G4MuonPlus.hh>
 #include <G4Neutron.hh>
+#include <G4OpticalPhoton.hh>
 #include <G4Positron.hh>
 #include <accel/AlongStepFactory.hh>
 #include <accel/SetupOptions.hh>
@@ -22,6 +23,7 @@
 #include <corecel/io/Logger.hh>
 
 #include "JsonReader.hh"
+#include "RootOpticalIO.hh"
 
 namespace detail
 {
@@ -38,6 +40,7 @@ static VecPDG const supported_celeritas_pdgs{
     celeritas::pdg::positron().get(),
     celeritas::pdg::mu_minus().get(),
     celeritas::pdg::mu_plus().get(),
+    -22, /* Optical photon */
 };
 
 //! Helper function to verify if PDG is in the list of particles
@@ -74,6 +77,7 @@ inline celeritas::SetupOptions::VecG4PD initialize_pdgs_from_json()
         {celeritas::pdg::positron(), G4Positron::Definition()},
         {celeritas::pdg::mu_minus(), G4MuonMinus::Definition()},
         {celeritas::pdg::mu_plus(), G4MuonPlus::Definition()},
+        {PDGNumber{-22}, G4OpticalPhoton::Definition()},
     };
 
     celeritas::SetupOptions::VecG4PD result;
@@ -122,6 +126,17 @@ inline celeritas::SetupOptions MakeCelerOptions()
 
     // Set along-step factory with zero field
     opts.make_along_step = celeritas::UniformAlongStepFactory();
+
+    // Optical physics setup
+    opts.optical = [] {
+        celeritas::OpticalSetupOptions opt;
+        opt.capacity.primaries = std::pow(2, 19);
+        opt.capacity.tracks = std::pow(2, 17);
+        opt.capacity.generators = std::pow(2, 16);
+        opt.generator = celeritas::inp::OpticalDirectGenerator{};
+        opt.detectors.callback = celeritas::optical_hits_callback;
+        return opt;
+    }();
 
     return opts;
 }

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <G4Electron.hh>
+#include <G4OpticalPhysics.hh>
 #include <G4Positron.hh>
 #include <G4RunManagerFactory.hh>
 #include <G4Threading.hh>
@@ -39,8 +40,8 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Set MT logger level
-    ::setenv("CELER_LOG_LOCAL", "status", /* overwrite = */ 1);
+    // Set MT logger level if it is not set by the user
+    ::setenv("CELER_LOG_LOCAL", "status", /* overwrite = */ false);
 
     // Load and verify input file
     JsonReader::Construct(argv[1]);
@@ -60,11 +61,19 @@ int main(int argc, char* argv[])
     tmi.SetOptions(MakeCelerOptions());
 
     // Initialize physics with Celeritas offload
-    using PhysicsOptions = celeritas::GeantPhysicsOptions;
-    using MuonPhysicsOptions = celeritas::GeantMuonPhysicsOptions;
-    auto phys_opts = PhysicsOptions{};
+    auto physics = std::make_unique<G4VModularPhysicsList>();
+    auto optical_physics = std::make_unique<G4OpticalPhysics>();
 
-    auto physics = std::make_unique<celeritas::EmPhysicsList>(phys_opts);
+    auto optical_params = G4OpticalParameters::Instance();
+    optical_params->SetProcessActivation("Cerenkov", false);
+    optical_params->SetProcessActivation("OpRayleigh", false);
+    optical_params->SetProcessActivation("OpMieHG", false);
+    optical_params->SetProcessActivation("OpWLS", false);
+    optical_params->SetProcessActivation("OpWLS2", false);
+    // optical_params->SetProcessActivation("OpAbsorption", false);
+    // opticalParams->SetProcessActivation("OpBoundary", false);
+
+    physics->RegisterPhysics(optical_physics.release());
     physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
     run_manager->SetUserInitialization(physics.release());
 

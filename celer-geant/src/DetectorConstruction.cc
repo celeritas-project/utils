@@ -104,9 +104,8 @@ void DetectorConstruction::InitializeSensitiveDetectors()
  */
 void DetectorConstruction::MakeAllVolumesSensitive()
 {
-    CELER_LOG_LOCAL(status)
-        << "Initializing all physical volumes as sensitive "
-           "detectors";
+    CELER_LOG(status) << "Initializing all physical volumes as sensitive "
+                         "detectors";
 
     auto sd_manager = G4SDManager::GetSDMpointer();
     CELER_ASSERT(sd_manager);
