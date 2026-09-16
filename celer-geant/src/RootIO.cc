@@ -106,7 +106,7 @@ RootIO::RootIO()
                       "\"SensDet\" auxiliary data or RootIO::Instance() was "
                       "called before ::BeginOfRunAction.");
 
-    CELER_LOG_LOCAL(status) << "Past validate";
+    data_store_.Global() = SensDetData::Initialize("all_sensdets");
 }
 
 //---------------------------------------------------------------------------//

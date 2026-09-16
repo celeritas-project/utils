@@ -21,34 +21,23 @@ namespace
 {
 //---------------------------------------------------------------------------//
 /*!
- * Convert MeV to nm using the relation
- * \f[
- *  \lambda_{\text{nm}} = \frac{hc}{E_{\text{MeV}}} .
- * \f]
+ * Get the Geant4 physical volume from a given Celeritas' (x, y, z) hit
+ * position in the world coordinate system via the G4TransportationManager.
  */
-inline double mev_to_nm(double photon_energy_mev)
+inline G4VPhysicalVolume* physvol_from_coordinate(celeritas::Real3 const pos)
 {
-    static double const hplanck_clight = 1239.8 * 1e-6;  // [MeV * nm]
-    return (photon_energy_mev > 0) ? (hplanck_clight / photon_energy_mev * 1e6)
-                                   : -1.0;
-}
+    using celeritas::native_to_geant;
+    using ClhepLength = celeritas::lengthunits::ClhepLength;
 
-//---------------------------------------------------------------------------//
-/*!
- * Get the Geant4 physical volume from a given (x, y, z) point in the world
- * coordinate system via the G4TransportationManager.
- */
-inline G4VPhysicalVolume* physvol_from_coordinate(G4ThreeVector const pos)
-{
     auto* tm = G4TransportationManager::GetTransportationManager();
     CELER_ASSERT(tm);
     auto* nav = tm->GetNavigatorForTracking();
     CELER_ASSERT(nav);
-    auto* result = nav->LocateGlobalPointAndSetup(pos);
+    auto* result
+        = nav->LocateGlobalPointAndSetup(native_to_geant<ClhepLength>(pos));
     CELER_ENSURE(result);
     return result;
 }
-
 //---------------------------------------------------------------------------//
 }  // namespace
 
@@ -61,10 +50,6 @@ namespace celeritas
 inline void optical_hits_callback(
     celeritas::Span<celeritas::optical::DetectorHit const> hits)
 {
-    using celeritas::native_to_geant;
-    using celeritas::real_type;
-    using celeritas::units::MevEnergy;
-
 #define OHC_1D_FILL(MEMBER, VALUE) data.MEMBER.Fill(VALUE);
 #define OHC_2D_FILL(MEMBER, X, Y) data.MEMBER.Fill(X, Y);
 #define OHC_1D_FILL_WEIGHT(MEMBER, VALUE, WEIGHT)        \
@@ -78,8 +63,7 @@ inline void optical_hits_callback(
     for (auto const& hit : hits)
     {
         // Locate volume from hit
-        auto* phys_vol = physvol_from_coordinate(
-            native_to_geant<lengthunits::ClhepLength>(hit.position));
+        auto* phys_vol = physvol_from_coordinate(hit.position);
         auto& data = rio->Data().Find(phys_vol->GetInstanceID(),
                                       phys_vol->GetCopyNo());
 

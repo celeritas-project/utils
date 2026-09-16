@@ -65,13 +65,14 @@ int main(int argc, char* argv[])
     auto optical_physics = std::make_unique<G4OpticalPhysics>();
 
     auto optical_params = G4OpticalParameters::Instance();
+    optical_params->SetProcessActivation("Scintillation", false);
     optical_params->SetProcessActivation("Cerenkov", false);
     optical_params->SetProcessActivation("OpRayleigh", false);
     optical_params->SetProcessActivation("OpMieHG", false);
     optical_params->SetProcessActivation("OpWLS", false);
     optical_params->SetProcessActivation("OpWLS2", false);
-    // optical_params->SetProcessActivation("OpAbsorption", false);
-    // opticalParams->SetProcessActivation("OpBoundary", false);
+    optical_params->SetProcessActivation("OpAbsorption", true);
+    optical_params->SetProcessActivation("OpBoundary", true);
 
     physics->RegisterPhysics(optical_physics.release());
     physics->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));

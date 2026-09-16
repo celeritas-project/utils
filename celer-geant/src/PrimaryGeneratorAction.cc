@@ -35,7 +35,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     G4ThreeVector vertex(pg.at("vertex")[0].get<double>(),
                          pg.at("vertex")[1].get<double>(),
                          pg.at("vertex")[2].get<double>());
-    vertex *= cm;  // Convert to cm
+    vertex *= CLHEP::cm;  // Convert to cm
     G4ThreeVector direction(pg.at("direction")[0].get<double>(),
                             pg.at("direction")[1].get<double>(),
                             pg.at("direction")[2].get<double>());

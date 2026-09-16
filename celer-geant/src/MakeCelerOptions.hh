@@ -29,36 +29,61 @@ namespace detail
 {
 //---------------------------------------------------------------------------/
 /*!
- * Static list of valid PDGs for Celeritas offload.
+ * Static list of all valid PDGs for Celeritas offload.
+ */
+inline std::unordered_map<celeritas::PDGNumber, G4ParticleDefinition*> const
+supported_celeritas_particles()
+{
+    static std::unordered_map<celeritas::PDGNumber, G4ParticleDefinition*> supported
+        = {
+            {celeritas::pdg::gamma(), G4Gamma::Definition()},
+            {celeritas::pdg::electron(), G4Electron::Definition()},
+            {celeritas::pdg::positron(), G4Positron::Definition()},
+            {celeritas::pdg::mu_minus(), G4MuonMinus::Definition()},
+            {celeritas::pdg::mu_plus(), G4MuonPlus::Definition()},
+            {celeritas::PDGNumber{-22}, G4OpticalPhoton::Definition()},
+        };
+    return supported;
+}
+
+//---------------------------------------------------------------------------/
+/*!
+ * Return a \c std::vector<int> of supported PDGs.
  */
 using PDG = int;
 using VecPDG = std::vector<PDG>;
-
-static VecPDG const supported_celeritas_pdgs{
-    celeritas::pdg::gamma().get(),
-    celeritas::pdg::electron().get(),
-    celeritas::pdg::positron().get(),
-    celeritas::pdg::mu_minus().get(),
-    celeritas::pdg::mu_plus().get(),
-    -22, /* Optical photon */
-};
-
-//! Helper function to verify if PDG is in the list of particles
-static bool is_valid_celeritas_pdg(VecPDG const& valid_pdgs, PDG pdg)
+inline VecPDG supported_celeritas_pdgs()
 {
-    return std::any_of(supported_celeritas_pdgs.begin(),
-                       supported_celeritas_pdgs.end(),
+    VecPDG result;
+    for (auto const& [pdg, _] : supported_celeritas_particles())
+    {
+        result.push_back(pdg.unchecked_get());
+    }
+    return result;
+}
+
+//---------------------------------------------------------------------------/
+/*!
+ * Helper function to verify if PDG is in the list of particles.
+ */
+inline static bool is_valid_celeritas_pdg(VecPDG const& valid_pdgs, PDG pdg)
+{
+    return std::any_of(supported_celeritas_pdgs().begin(),
+                       supported_celeritas_pdgs().end(),
                        [pdg](PDG this_pdg) { return this_pdg == pdg; });
 }
 
-//! Return list of PDGs used given the JSON input
-static VecPDG offloaded_pdgs_from_json()
+//---------------------------------------------------------------------------/
+/*!
+ * Return list of PDGs used given the JSON input.
+ */
+inline static VecPDG offloaded_pdgs_from_json()
 {
     JsonReader::Validate(JsonReader::Instance(), "celeritas");
     auto const& json = JsonReader::Instance().at("celeritas");
     VecPDG result = json.contains("offload_particles")
                         ? json.at("offload_particles").get<VecPDG>()
-                        : supported_celeritas_pdgs;
+                        : supported_celeritas_pdgs();
     return result;
 }
 //---------------------------------------------------------------------------/
@@ -70,21 +95,12 @@ static VecPDG offloaded_pdgs_from_json()
  */
 inline celeritas::SetupOptions::VecG4PD initialize_pdgs_from_json()
 {
-    using celeritas::PDGNumber;
-    static std::unordered_map<PDGNumber, G4ParticleDefinition*> supported = {
-        {celeritas::pdg::gamma(), G4Gamma::Definition()},
-        {celeritas::pdg::electron(), G4Electron::Definition()},
-        {celeritas::pdg::positron(), G4Positron::Definition()},
-        {celeritas::pdg::mu_minus(), G4MuonMinus::Definition()},
-        {celeritas::pdg::mu_plus(), G4MuonPlus::Definition()},
-        {PDGNumber{-22}, G4OpticalPhoton::Definition()},
-    };
-
     celeritas::SetupOptions::VecG4PD result;
     auto const input = detail::offloaded_pdgs_from_json();
+    auto const supported = detail::supported_celeritas_particles();
     for (auto pdg : input)
     {
-        auto it = supported.find(PDGNumber{pdg});
+        auto it = supported.find(celeritas::PDGNumber{pdg});
         CELER_VALIDATE(it != supported.end(),
                        << "PDG '" << pdg << "' not available");
         result.push_back(it->second);

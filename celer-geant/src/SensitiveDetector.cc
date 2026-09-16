@@ -104,6 +104,12 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory*)
         }
     }
 
+    // Global SD data
+    auto& global_data = rio->Data().Global();
+    global_data.step_len.Fill(len);
+    global_data.pos_xy.Fill(pre_pos.x(), pre_pos.y());
+    global_data.time.Fill(pre->GetGlobalTime() / CLHEP::s);
+
     return true;
 
 #undef SD_1D_FILL

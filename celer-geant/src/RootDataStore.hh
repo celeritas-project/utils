@@ -154,9 +154,13 @@ class RootDataStore
     //! Get histogram data for a given physical volume ID and copy number
     SensDetData& Find(PhysVolId pv_id, CopyNumber copy_num);
 
+    //! Get histogram data for accumulated tallies accross all SDs
+    SensDetData& Global() { return global_data_; }
+
     //! Access full SD map
     std::map<SensDetId, SensDetData>& Map() { return sensdet_map_; }
 
   private:
     std::map<SensDetId, SensDetData> sensdet_map_;
+    SensDetData global_data_;  //!< Global data for all SDs
 };
